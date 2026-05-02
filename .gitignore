@@ -1,0 +1,19 @@
+# OS / editor junk
+.DS_Store
+Thumbs.db
+
+# temp / logs
+*.log
+*.tmp
+*.swp
+*.swo
+
+# cache / build artifacts
+.cache/
+tmp/
+dist/
+
+# node (if ever used)
+node_modules/
+
+
