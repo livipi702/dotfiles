@@ -33,62 +33,62 @@ vim.opt.jumpoptions = "stack"
 vim.opt.timeoutlen = 400
 
 vim.opt.fillchars = {
-  eob = " ",
+	eob = " ",
 }
 
 vim.g.mapleader = " "
 vim.g.autoformat = true
 
 vim.filetype.add({ extension = { ejs = "ejs" } })
-vim.treesitter.language.register("html", "ejs")
+vim.treesitter.language.register("embedded_template", "ejs")
 
 -- ╔══════════════════════════════════════════════════╗
 -- ║                    CLIPBOARD               ║
 -- ╚══════════════════════════════════════════════════╝
 
 if CURRENT_OS == "linux" then
-  local is_wsl = vim.fn.has("wsl") == 1
-  if is_wsl then
-    if has_cmd("win32yank.exe") then
-      vim.g.clipboard = {
-        name = "WslClipboard",
-        copy = { ["+"] = "win32yank.exe -i --crlf", ["*"] = "win32yank.exe -i --crlf" },
-        paste = { ["+"] = "win32yank.exe -o --lf", ["*"] = "win32yank.exe -o --lf" },
-        cache_enabled = 0,
-      }
-    else
-      vim.g.clipboard = {
-        name = "WslClipboard",
-        copy = { ["+"] = "clip.exe", ["*"] = "clip.exe" },
-        paste = {
-          ["+"] = 'powershell.exe -NoLogo -NoProfile -c [Console]::Out.Write($(Get-Clipboard -Raw).tostring().replace("`r", ""))',
-          ["*"] = 'powershell.exe -NoLogo -NoProfile -c [Console]::Out.Write($(Get-Clipboard -Raw).tostring().replace("`r", ""))',
-        },
-        cache_enabled = 0,
-      }
-    end
-  end
+	local is_wsl = vim.fn.has("wsl") == 1
+	if is_wsl then
+		if has_cmd("win32yank.exe") then
+			vim.g.clipboard = {
+				name = "WslClipboard",
+				copy = { ["+"] = "win32yank.exe -i --crlf", ["*"] = "win32yank.exe -i --crlf" },
+				paste = { ["+"] = "win32yank.exe -o --lf", ["*"] = "win32yank.exe -o --lf" },
+				cache_enabled = 0,
+			}
+		else
+			vim.g.clipboard = {
+				name = "WslClipboard",
+				copy = { ["+"] = "clip.exe", ["*"] = "clip.exe" },
+				paste = {
+					["+"] = 'powershell.exe -NoLogo -NoProfile -c [Console]::Out.Write($(Get-Clipboard -Raw).tostring().replace("`r", ""))',
+					["*"] = 'powershell.exe -NoLogo -NoProfile -c [Console]::Out.Write($(Get-Clipboard -Raw).tostring().replace("`r", ""))',
+				},
+				cache_enabled = 0,
+			}
+		end
+	end
 elseif CURRENT_OS == "mac" then
-  vim.g.clipboard = {
-    name = "macOSClipboard",
-    copy = { ["+"] = "pbcopy", ["*"] = "pbcopy" },
-    paste = { ["+"] = "pbpaste", ["*"] = "pbpaste" },
-  }
+	vim.g.clipboard = {
+		name = "macOSClipboard",
+		copy = { ["+"] = "pbcopy", ["*"] = "pbcopy" },
+		paste = { ["+"] = "pbpaste", ["*"] = "pbpaste" },
+	}
 elseif CURRENT_OS == "win" then
-  vim.g.clipboard = {
-    name = "WindowsClipboard",
-    copy = { ["+"] = "clip.exe", ["*"] = "clip.exe" },
-    paste = {
-      ["+"] = 'powershell.exe -NoLogo -NoProfile -c Get-Clipboard',
-      ["*"] = 'powershell.exe -NoLogo -NoProfile -c Get-Clipboard',
-    },
-  }
+	vim.g.clipboard = {
+		name = "WindowsClipboard",
+		copy = { ["+"] = "clip.exe", ["*"] = "clip.exe" },
+		paste = {
+			["+"] = "powershell.exe -NoLogo -NoProfile -c Get-Clipboard",
+			["*"] = "powershell.exe -NoLogo -NoProfile -c Get-Clipboard",
+		},
+	}
 end
 
 vim.diagnostic.config({
-  virtual_text = { prefix = "●", spacing = 4 },
-  signs = true,
-  underline = true,
-  update_in_insert = false,
-  float = { border = "rounded", source = true },
+	virtual_text = { prefix = "●", spacing = 4 },
+	signs = true,
+	underline = true,
+	update_in_insert = false,
+	float = { border = "rounded", source = true },
 })

@@ -1,4 +1,3 @@
-
 local lang = require("utils.lang-config")
 local helpers = require("utils.helpers")
 local LSP_SERVERS = lang.get_lsp_servers()
@@ -25,6 +24,7 @@ return {
 		config = function()
 			require("mason-lspconfig").setup({
 				ensure_installed = LSP_SERVERS,
+				automatic_enable = false,
 			})
 		end,
 	},
@@ -37,6 +37,7 @@ return {
 			vim.list_extend(tools, FORMATTERS)
 			vim.list_extend(tools, DAP_ADAPTERS)
 			vim.list_extend(tools, get_linters())
+			vim.list_extend(tools, { "java-test" })
 			require("mason-tool-installer").setup({
 				ensure_installed = tools,
 			})
@@ -171,10 +172,11 @@ return {
 					".git",
 				},
 				settings = {
-					tailwind = {
+					tailwindCSS = {
 						classAttributes = {
 							"class",
 							"className",
+							"class:list",
 							"classList",
 							"ngClass",
 						},

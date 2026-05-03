@@ -1,4 +1,3 @@
-
 local helpers = require("utils.helpers")
 local has_cmd = helpers.has_cmd
 local has_file = helpers.has_file
@@ -347,7 +346,7 @@ local LANG_CONFIG = {
 			},
 		},
 		formatters = { "prettierd", "prettier", stop_after_first = true },
-		treesitter = { "html" },
+		treesitter = { "embedded_template", "html", "javascript", "css" },
 		indent = { tabstop = 2, shiftwidth = 2 },
 		run = browser_run,
 	},
@@ -379,7 +378,7 @@ local LANG_CONFIG = {
 	ejs = {
 		lsp = "html",
 		formatters = { "prettierd_html" },
-		treesitter = { "html" },
+		treesitter = { "embedded_template", "html", "javascript", "css" },
 		indent = { tabstop = 2, shiftwidth = 2 },
 		run = browser_run,
 	},
