@@ -11,16 +11,8 @@ return {
 			"onsails/lspkind.nvim",
 		},
 		config = function()
-			local ok_c, cmp = pcall(require, "cmp")
-			if not ok_c then
-				vim.notify("Failed to load nvim-cmp: " .. tostring(cmp), vim.log.levels.WARN)
-				return
-			end
-			local ok_s, luasnip = pcall(require, "luasnip")
-			if not ok_s then
-				vim.notify("Failed to load LuaSnip: " .. tostring(luasnip), vim.log.levels.WARN)
-				return
-			end
+			local cmp = require("cmp")
+			local luasnip = require("luasnip")
 			local ok_k, lspkind = pcall(require, "lspkind")
 
 			require("luasnip.loaders.from_vscode").lazy_load()

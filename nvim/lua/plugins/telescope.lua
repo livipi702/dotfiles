@@ -14,11 +14,7 @@ return {
     cmd = "Telescope",
     dependencies = { "nvim-lua/plenary.nvim", "nvim-telescope/telescope-fzf-native.nvim" },
     config = function()
-      local ok_tel, telescope = pcall(require, "telescope")
-      if not ok_tel then
-        vim.notify("Failed to load telescope: " .. tostring(telescope), vim.log.levels.WARN)
-        return
-      end
+      local telescope = require("telescope")
       local actions = require("telescope.actions")
       telescope.setup({
         defaults = {
@@ -60,12 +56,12 @@ return {
             or {},
         },
       })
-      pcall(telescope.load_extension, "fzf")
+      telescope.load_extension("fzf")
       vim.api.nvim_create_autocmd("User", {
         pattern = "VeryLazy",
         once = true,
         callback = function()
-          pcall(telescope.load_extension, "projects")
+          telescope.load_extension("projects")
         end,
       })
     end,

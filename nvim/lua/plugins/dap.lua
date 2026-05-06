@@ -76,14 +76,8 @@ return {
       },
     },
     config = function()
-      local ok_d, dap = pcall(require, "dap")
-      if not ok_d then
-        return
-      end
-      local ok_u, dapui = pcall(require, "dapui")
-      if not ok_u then
-        return
-      end
+      local dap = require("dap")
+      local dapui = require("dapui")
 
       require("mason-nvim-dap").setup({
         ensure_installed = {},
@@ -94,13 +88,11 @@ return {
         },
       })
       dapui.setup()
-      pcall(function()
-        require("nvim-dap-virtual-text").setup()
-      end)
+      require("nvim-dap-virtual-text").setup()
 
-      vim.fn.sign_define("DapBreakpoint", { text = "●", texthl = "DiagnosticError" })
-      vim.fn.sign_define("DapBreakpointCondition", { text = "◆", texthl = "DiagnosticWarn" })
-      vim.fn.sign_define("DapStopped", { text = "▶", texthl = "DiagnosticInfo", linehl = "Visual" })
+      vim.sign_define("DapBreakpoint", { text = "●", texthl = "DiagnosticError" })
+      vim.sign_define("DapBreakpointCondition", { text = "◆", texthl = "DiagnosticWarn" })
+      vim.sign_define("DapStopped", { text = "▶", texthl = "DiagnosticInfo", linehl = "Visual" })
 
       for ft, dap_cfg in pairs(DAP_CONFIGS) do
         dap.configurations[ft] = dap_cfg

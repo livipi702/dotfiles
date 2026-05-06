@@ -10,14 +10,6 @@ return {
       persistence.setup({
         options = { "buffers", "curdir", "tabpages", "winsize", "help", "globals", "skiprtp" },
       })
-      vim.api.nvim_create_autocmd("VimLeavePre", {
-        group = vim.api.nvim_create_augroup("auto_save_session", { clear = true }),
-        callback = function()
-          if vim.bo.filetype ~= "gitcommit" and vim.bo.filetype ~= "gitrebase" then
-            persistence.save()
-          end
-        end,
-      })
     end,
     keys = {
       {

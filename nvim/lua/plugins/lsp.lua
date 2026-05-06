@@ -13,6 +13,7 @@ local LANG_CONFIG = lang.LANG_CONFIG
 return {
 	{
 		"williamboman/mason.nvim",
+		cmd = { "Mason", "MasonInstall", "MasonUpdate" },
 		config = function()
 			require("mason").setup()
 		end,
@@ -50,7 +51,6 @@ return {
 			"williamboman/mason.nvim",
 			"williamboman/mason-lspconfig.nvim",
 			"hrsh7th/cmp-nvim-lsp",
-			"folke/lazydev.nvim",
 			"b0o/schemastore.nvim",
 		},
 		config = function()

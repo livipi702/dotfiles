@@ -37,14 +37,10 @@ vim.api.nvim_create_autocmd("FileType", {
 			end
 		end
 
-		-- Enable current nvim-treesitter main-branch features when a parser exists.
+		-- Enable treesitter highlighting when a parser exists.
 		local ok_get, ts_lang = pcall(vim.treesitter.language.get_lang, ft)
 		ts_lang = (ok_get and ts_lang) or ft
-		local ok_parser = pcall(vim.treesitter.language.inspect, ts_lang)
-		if ok_parser then
-			pcall(vim.treesitter.start, event.buf, ts_lang)
-			vim.bo[event.buf].indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
-		end
+		pcall(vim.treesitter.start, event.buf, ts_lang)
 	end,
 })
 

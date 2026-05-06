@@ -3,11 +3,7 @@ return {
     "ahmedkhalf/project.nvim",
     event = "VeryLazy",
     config = function()
-      local ok_pr, project = pcall(require, "project_nvim")
-      if not ok_pr then
-        return
-      end
-      project.setup({
+      require("project_nvim").setup({
         detection_methods = { "pattern" },
         patterns = {
           ".git",

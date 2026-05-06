@@ -4,11 +4,7 @@ return {
     event = "LspAttach",
     dependencies = { "rmagatti/logger.nvim" },
     config = function()
-      local ok_gp, gp = pcall(require, "goto-preview")
-      if not ok_gp then
-        return
-      end
-      gp.setup({
+      require("goto-preview").setup({
         width = 120,
         height = 30,
         border = "rounded",
@@ -60,11 +56,7 @@ return {
     "aznhe21/actions-preview.nvim",
     event = "LspAttach",
     config = function()
-      local ok_ap, ap = pcall(require, "actions-preview")
-      if not ok_ap then
-        return
-      end
-      ap.setup({
+      require("actions-preview").setup({
         telescope = {
           sorting_strategy = "ascending",
           layout_strategy = "vertical",

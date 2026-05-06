@@ -85,9 +85,17 @@ elseif CURRENT_OS == "win" then
 	}
 end
 
+local sev = vim.diagnostic.severity
 vim.diagnostic.config({
-	virtual_text = { prefix = "●", spacing = 4 },
-	signs = true,
+	virtual_text = { prefix = "●" },
+	signs = {
+		text = {
+			[sev.ERROR] = "●",
+			[sev.WARN] = "●",
+			[sev.INFO] = "●",
+			[sev.HINT] = "●",
+		},
+	},
 	underline = true,
 	update_in_insert = false,
 	float = { border = "rounded", source = true },

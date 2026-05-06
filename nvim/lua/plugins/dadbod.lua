@@ -7,20 +7,12 @@ return {
         "kristijanhusak/vim-dadbod-completion",
         ft = { "sql", "mysql", "plsql" },
         config = function()
-          vim.api.nvim_create_autocmd("FileType", {
-            pattern = { "sql", "mysql", "plsql" },
-            callback = function()
-              local ok_c2, cmp2 = pcall(require, "cmp")
-              if not ok_c2 then
-                return
-              end
-              cmp2.setup.buffer({
-                sources = cmp2.config.sources({
-                  { name = "vim-dadbod-completion" },
-                  { name = "buffer" },
-                }),
-              })
-            end,
+          local cmp = require("cmp")
+          cmp.setup.filetype({ "sql", "mysql", "plsql" }, {
+            sources = cmp.config.sources({
+              { name = "vim-dadbod-completion" },
+              { name = "buffer" },
+            }),
           })
         end,
       },

@@ -11,14 +11,14 @@ return {
     "windwp/nvim-autopairs",
     event = "InsertEnter",
     config = function()
-      pcall(function() require("nvim-autopairs").setup({}) end)
+      require("nvim-autopairs").setup({})
     end,
   },
   {
     "kylechui/nvim-surround",
     event = "VeryLazy",
     config = function()
-      pcall(function() require("nvim-surround").setup({}) end)
+      require("nvim-surround").setup({})
     end,
   },
   {
@@ -34,13 +34,11 @@ return {
   {
     "RRethy/vim-illuminate",
     config = function()
-      local ok_il, il = pcall(require, "illuminate")
-      if not ok_il then return end
-      il.configure({
+      require("illuminate").configure({
         delay = 200,
         filetypes_exclude = {
           "NvimTree",
-          "alpha",
+          "snacks_dashboard",
           "toggleterm",
           "dbui",
           "qf",
@@ -108,12 +106,7 @@ return {
       },
     },
     config = function()
-      local ok, conform = pcall(require, "conform")
-      if not ok then
-        vim.notify("conform.nvim not available", vim.log.levels.WARN)
-        return
-      end
-
+      local conform = require("conform")
       conform.setup({
         formatters_by_ft = CONFORM_BY_FT,
         formatters = CUSTOM_FORMATTERS,
@@ -162,12 +155,7 @@ return {
     event = { "BufReadPre", "BufNewFile" },
     dependencies = { "williamboman/mason.nvim" },
     config = function()
-      local ok, lint = pcall(require, "lint")
-      if not ok then
-        vim.notify("nvim-lint not available", vim.log.levels.WARN)
-        return
-      end
-
+      local lint = require("lint")
       lint.linters_by_ft = LINTERS_BY_FT
 
       vim.g.linting_enabled = true
@@ -205,9 +193,7 @@ return {
     event = { "BufReadPost", "BufNewFile" },
     dependencies = { "nvim-lua/plenary.nvim" },
     config = function()
-      local ok_tc, tc = pcall(require, "todo-comments")
-      if not ok_tc then return end
-      tc.setup()
+      require("todo-comments").setup()
       vim.keymap.set("n", "<leader>ft", "<cmd>TodoTelescope<CR>", { silent = true, desc = "Todo comments" })
       vim.keymap.set("n", "]t", function()
         require("todo-comments").jump_next()
@@ -255,11 +241,7 @@ return {
     "smjonas/inc-rename.nvim",
     cmd = "IncRename",
     config = function()
-      local ok_ir, inc = pcall(require, "inc_rename")
-      if not ok_ir then
-        return
-      end
-      inc.setup({})
+      require("inc_rename").setup({})
     end,
   },
 
@@ -334,11 +316,6 @@ return {
     "monaqa/dial.nvim",
     event = "VeryLazy",
     config = function()
-      local ok, dial = pcall(require, "dial")
-      if not ok then
-        vim.notify("dial.nvim not available", vim.log.levels.WARN)
-        return
-      end
       local augend = require("dial.augend")
       require("dial.config").augends:register_group({
         default = {

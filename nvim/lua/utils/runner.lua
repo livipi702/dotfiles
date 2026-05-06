@@ -1,6 +1,7 @@
 
 local helpers = require("utils.helpers")
 local append_input_redirect = helpers.append_input_redirect
+local CURRENT_OS = helpers.CURRENT_OS
 
 local lang = require("utils.lang-config")
 local get_lang_cfg = lang.get_lang_cfg
@@ -86,7 +87,7 @@ function job_manager:compile(cmd, cwd, on_success, timeout_ms)
   
   local output = {}
   local job_cmd
-  if CURRENT_OS == "win" and vim.o.shell:match("powershell") or vim.o.shell:match("pwsh") or vim.o.shell:match("cmd") then
+  if CURRENT_OS == "win" and (vim.o.shell:match("powershell") or vim.o.shell:match("pwsh") or vim.o.shell:match("cmd")) then
     job_cmd = { vim.o.shell, "/c", cmd }
   else
     job_cmd = { vim.o.shell, vim.o.shellcmdflag, cmd }

@@ -9,9 +9,7 @@ return {
   {
     "akinsho/toggleterm.nvim",
     config = function()
-      local ok_tt, tt = pcall(require, "toggleterm")
-      if not ok_tt then return end
-      tt.setup({
+      require("toggleterm").setup({
         size = 15,
         open_mapping = [[<C-t>]],
         direction = "horizontal",
@@ -25,7 +23,6 @@ return {
 
   {
     "barrettruth/live-server.nvim",
-    build = "npm list -g live-server >/dev/null 2>&1 || npm install -g live-server",
     ft = { "html", "css", "javascript", "javascriptreact", "typescript", "typescriptreact", "ejs" },
     cmd = { "LiveServerStart", "LiveServerStop" },
     init = function()

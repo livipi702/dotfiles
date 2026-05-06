@@ -6,7 +6,7 @@
 vim.keymap.set("n", "<leader>w", "<cmd>w<CR>", { silent = true, desc = "Save" })
 vim.keymap.set("n", "<leader>q", "<cmd>q<CR>", { silent = true, desc = "Quit" })
 vim.keymap.set("n", "<leader>x", "<cmd>bdelete<CR>", { silent = true, desc = "Close buffer" })
-vim.keymap.set("n", "<Esc>", "<cmd>nohlsearch<CR>", { silent = true, desc = "Clear search" })
+vim.keymap.set("n", "<leader>h", "<cmd>nohlsearch<CR>", { silent = true, desc = "Clear search highlight" })
 
 vim.keymap.set({ "n", "v" }, "<leader>y", '"+y', { silent = true, desc = "Yank to clipboard" })
 vim.keymap.set({ "n", "v" }, "<leader>p", '"+p', { silent = true, desc = "Paste from clipboard" })
@@ -14,40 +14,15 @@ vim.keymap.set({ "n", "v" }, "<leader>p", '"+p', { silent = true, desc = "Paste 
 -- ═══════════════════════════════════════════════════════════════
 -- TELESCOPE
 -- ═══════════════════════════════════════════════════════════════
-vim.keymap.set("n", "<leader>ff", function()
-  local ok, _ = pcall(vim.cmd, "Telescope find_files")
-  if not ok then
-    vim.notify("Telescope not available", vim.log.levels.WARN)
-  end
-end, { silent = true, desc = "Files" })
+vim.keymap.set("n", "<leader>ff", "<cmd>Telescope find_files<cr>", { silent = true, desc = "Files" })
 
-vim.keymap.set("n", "<leader>fg", function()
-  local ok, _ = pcall(vim.cmd, "Telescope live_grep")
-  if not ok then
-    vim.notify("Telescope not available", vim.log.levels.WARN)
-  end
-end, { silent = true, desc = "Grep" })
+vim.keymap.set("n", "<leader>fg", "<cmd>Telescope live_grep<cr>", { silent = true, desc = "Grep" })
 
-vim.keymap.set("n", "<leader>fb", function()
-  local ok, _ = pcall(vim.cmd, "Telescope buffers")
-  if not ok then
-    vim.notify("Telescope not available", vim.log.levels.WARN)
-  end
-end, { silent = true, desc = "Buffers" })
+vim.keymap.set("n", "<leader>fb", "<cmd>Telescope buffers<cr>", { silent = true, desc = "Buffers" })
 
-vim.keymap.set("n", "<leader>fr", function()
-  local ok, _ = pcall(vim.cmd, "Telescope oldfiles")
-  if not ok then
-    vim.notify("Telescope not available", vim.log.levels.WARN)
-  end
-end, { silent = true, desc = "Recent" })
+vim.keymap.set("n", "<leader>fr", "<cmd>Telescope oldfiles<cr>", { silent = true, desc = "Recent" })
 
-vim.keymap.set("n", "<leader>fh", function()
-  local ok, _ = pcall(vim.cmd, "Telescope help_tags")
-  if not ok then
-    vim.notify("Telescope not available", vim.log.levels.WARN)
-  end
-end, { silent = true, desc = "Help" })
+vim.keymap.set("n", "<leader>fh", "<cmd>Telescope help_tags<cr>", { silent = true, desc = "Help" })
 
 vim.keymap.set("n", "<leader>fd", function()
   local ok, telescope = pcall(require, "telescope.builtin")
@@ -131,10 +106,6 @@ vim.api.nvim_create_autocmd("LspAttach", {
     if supports("textDocument/inlayHint") then
       vim.lsp.inlay_hint.enable(false, { bufnr = args.buf })
     end
-    
-    if supports("textDocument/documentColor") then
-      pcall(vim.lsp.document_color.enable, true, { bufnr = args.buf })
-    end
 
     -- ══════════════════════════════════════════════════════════════
     -- BUFFER-LOCAL LSP MAPS
@@ -165,13 +136,7 @@ vim.api.nvim_create_autocmd("LspAttach", {
       end, "Rename")
     end
 
-    if supports("textDocument/hover") then
-      map("K", vim.lsp.buf.hover, "Hover documentation")
-    end
-
-    if supports("textDocument/signatureHelp") then
-      map("<C-s>", vim.lsp.buf.signature_help, "Signature help")
-    end
+    -- K (hover) and <C-s> (signature help) are now set by Neovim 0.12 automatically
 
     if supports("textDocument/declaration") then
       map("gD", vim.lsp.buf.declaration, "Go to declaration")
@@ -181,13 +146,7 @@ vim.api.nvim_create_autocmd("LspAttach", {
       map("<leader>lt", vim.lsp.buf.type_definition, "Type definition")
     end
 
-    if supports("textDocument/implementation") then
-      map("gi", vim.lsp.buf.implementation, "Implementation")
-    end
-
-    if supports("textDocument/references") then
-      map("gr", vim.lsp.buf.references, "References")
-    end
+    -- gri (implementation) and grr (references) are now set by Neovim 0.12 automatically
 
     if supports("textDocument/definition") then
       map("gd", vim.lsp.buf.definition, "Go to definition")
@@ -241,26 +200,11 @@ end, { silent = true, desc = "Next diagnostic" })
 vim.keymap.set("n", "[q", "<cmd>cprev<CR>", { silent = true, desc = "Prev quickfix" })
 vim.keymap.set("n", "]q", "<cmd>cnext<CR>", { silent = true, desc = "Next quickfix" })
 
-vim.keymap.set("n", "<leader>gc", function()
-  local ok, _ = pcall(vim.cmd, "Telescope git_commits")
-  if not ok then
-    vim.notify("Telescope not available", vim.log.levels.WARN)
-  end
-end, { silent = true, desc = "Commits" })
+vim.keymap.set("n", "<leader>gc", "<cmd>Telescope git_commits<cr>", { silent = true, desc = "Commits" })
 
-vim.keymap.set("n", "<leader>gf", function()
-  local ok, _ = pcall(vim.cmd, "Telescope git_status")
-  if not ok then
-    vim.notify("Telescope not available", vim.log.levels.WARN)
-  end
-end, { silent = true, desc = "Changed files" })
+vim.keymap.set("n", "<leader>gf", "<cmd>Telescope git_status<cr>", { silent = true, desc = "Changed files" })
 
-vim.keymap.set("n", "<leader>gl", function()
-  local ok, _ = pcall(vim.cmd, "Telescope git_bcommits")
-  if not ok then
-    vim.notify("Telescope not available", vim.log.levels.WARN)
-  end
-end, { silent = true, desc = "Buffer commits" })
+vim.keymap.set("n", "<leader>gl", "<cmd>Telescope git_bcommits<cr>", { silent = true, desc = "Buffer commits" })
 
 vim.keymap.set("n", "<leader>gD", "<cmd>DiffviewOpen<CR>", { silent = true, desc = "Diff view" })
 vim.keymap.set("n", "<leader>gh", "<cmd>DiffviewFileHistory<CR>", { silent = true, desc = "File history" })

@@ -10,11 +10,7 @@ return {
     build = ":TSUpdate",
     dependencies = {},
     config = function()
-      local ok_ts, ts = pcall(require, "nvim-treesitter")
-      if not ok_ts then
-        vim.notify("Failed to load nvim-treesitter", vim.log.levels.WARN)
-        return
-      end
+      local ts = require("nvim-treesitter")
 
       vim.fn.mkdir(PARSER_DIR .. "/parser", "p")
 
@@ -26,7 +22,7 @@ return {
         local installed = ts.get_installed()
         for _, lang in ipairs(TREESITTER_LANGS) do
           if not vim.list_contains(installed, lang) then
-            pcall(ts.install, lang)
+            ts.install(lang)
           end
         end
       end)
@@ -128,11 +124,7 @@ return {
     "nvim-treesitter/nvim-treesitter-context",
     event = "BufReadPost",
     config = function()
-      local ok_ctx, ctx = pcall(require, "treesitter-context")
-      if not ok_ctx then
-        return
-      end
-      ctx.setup({
+      require("treesitter-context").setup({
         enable = true,
         max_lines = 3,
       })
@@ -143,6 +135,12 @@ return {
     "windwp/nvim-ts-autotag",
     event = "InsertEnter",
     dependencies = { "nvim-treesitter/nvim-treesitter" },
-    opts = {},
+    opts = {
+      opts = {
+        enable_close = true,
+        enable_rename = true,
+        enable_close_on_slash = true,
+      },
+    },
   },
 }

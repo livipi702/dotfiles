@@ -26,7 +26,8 @@ return {
       require("nvim-tree").setup({
         view = { width = 30 },
         filters = { dotfiles = false },
-        hijack_directories = { enable = true, auto_open = true },
+        hijack_netrw = true,
+        disable_netrw = true,
       })
     end,
   },

@@ -5,11 +5,7 @@ return {
 		event = "VeryLazy",
 		dependencies = { "nvim-tree/nvim-web-devicons" },
 		config = function()
-			local ok_ll, lualine = pcall(require, "lualine")
-			if not ok_ll then
-				return
-			end
-			lualine.setup({
+			require("lualine").setup({
 				options = {
 					theme = "tokyonight",
 					section_separators = { left = "", right = "" },
@@ -32,11 +28,7 @@ return {
 		event = "VeryLazy",
 		dependencies = { "nvim-tree/nvim-web-devicons" },
 		config = function()
-			local ok_bl, bufferline = pcall(require, "bufferline")
-			if not ok_bl then
-				return
-			end
-			bufferline.setup({
+			require("bufferline").setup({
 				options = {
 					diagnostics = "nvim_lsp",
 					offsets = {
@@ -101,11 +93,7 @@ return {
 			},
 		},
 		config = function()
-			local ok_no, noice = pcall(require, "noice")
-			if not ok_no then
-				return
-			end
-			noice.setup({
+			require("noice").setup({
 				lsp = {
 					progress = { enabled = false },
 					override = {
@@ -141,67 +129,41 @@ return {
 	},
 
 	{
-		"goolord/alpha-nvim",
-		event = "VimEnter",
-		dependencies = { "nvim-tree/nvim-web-devicons" },
-		config = function()
-			if vim.fn.argc() > 0 or vim.fn.line2byte(vim.fn.line("$")) ~= -1 then
-				return
-			end
-			local ok_a, alpha = pcall(require, "alpha")
-			if not ok_a then
-				return
-			end
-			local dashboard = require("alpha.themes.dashboard")
-
-			dashboard.section.header.val = {
-				"                                                     ",
-				"  ▓▓▓╗   ▓▓║▓▓▓▓▓▓▓╗ ▓▓▓▓▓▓╗ ▓▓║   ▓▓║▓▓║▓▓▓╗   ▓▓▓╗",
-				"  ▓▓▓▓╗  ▓▓║▓▓╔════╝▓▓╔═══▓▓╗▓▓║   ▓▓║▓▓║▓▓▓▓╗ ▓▓▓▓║",
-				"  ▓▓╔▓▓╗ ▓▓║▓▓▓▓▓╗  ▓▓║   ▓▓║▓▓║   ▓▓║▓▓║▓▓╔▓▓▓▓╔▓▓║",
-				"  ▓▓║╚▓▓╗▓▓║▓▓╔══╝  ▓▓║   ▓▓║╚▓▓╗ ▓▓╔╝▓▓║▓▓║╚▓▓╔╝▓▓║",
-				"  ▓▓║ ╚▓▓▓▓║▓▓▓▓▓▓▓╗╚▓▓▓▓▓▓╔╝ ╚▓▓▓▓╔╝ ▓▓║▓▓║ ╚═╝ ▓▓║",
-				"  ╚═╝  ╚═══╝╚══════╝ ╚═════╝   ╚═══╝  ╚═╝╚═╝     ╚═╝",
-			}
-			dashboard.section.buttons.val = {
-				dashboard.button("f", "  Find file", ":Telescope find_files<CR>"),
-				dashboard.button("r", "  Recent files", ":Telescope oldfiles<CR>"),
-				dashboard.button("g", "  Grep text", ":Telescope live_grep<CR>"),
-				dashboard.button("p", "  Projects", ":Telescope projects<CR>"),
-				dashboard.button("s", "  Restore session", [[<cmd>lua require("persistence").load()<CR>]]),
-				dashboard.button("c", "  Config", ":e $MYVIMRC<CR>"),
-				dashboard.button("l", "  Lazy", ":Lazy<CR>"),
-				dashboard.button("m", "  Mason", ":Mason<CR>"),
-				dashboard.button("q", "  Quit", ":qa<CR>"),
-			}
-
-			vim.api.nvim_create_autocmd("User", {
-				pattern = "LazyDone",
-				once = true,
-				callback = function()
-					local stats = require("lazy").stats()
-					local ms = math.floor(stats.startuptime * 100 + 0.5) / 100
-					dashboard.section.footer.val = "  "
-						.. stats.loaded
-						.. "/"
-						.. stats.count
-						.. " plugins in "
-						.. ms
-						.. "ms"
-					pcall(vim.cmd.AlphaRedraw)
-				end,
-			})
-
-			alpha.setup(dashboard.config)
-
-			vim.api.nvim_create_autocmd("User", {
-				pattern = "AlphaReady",
-				callback = function()
-					vim.opt_local.foldenable = false
-					vim.opt_local.cursorline = false
-				end,
-			})
-		end,
+		"folke/snacks.nvim",
+		priority = 1000,
+		lazy = false,
+		opts = {
+			bigfile = { enabled = true },
+			dashboard = {
+				preset = {
+					header = table.concat({
+						"                                                     ",
+						"  ▓▓▓╗   ▓▓║▓▓▓▓▓▓▓╗ ▓▓▓▓▓▓╗ ▓▓║   ▓▓║▓▓║▓▓▓╗   ▓▓▓╗",
+						"  ▓▓▓▓╗  ▓▓║▓▓╔════╝▓▓╔═══▓▓╗▓▓║   ▓▓║▓▓║▓▓▓▓╗ ▓▓▓▓║",
+						"  ▓▓╔▓▓╗ ▓▓║▓▓▓▓▓╗  ▓▓║   ▓▓║▓▓║   ▓▓║▓▓║▓▓╔▓▓▓▓╔▓▓║",
+						"  ▓▓║╚▓▓╗▓▓║▓▓╔══╝  ▓▓║   ▓▓║╚▓▓╗ ▓▓╔╝▓▓║▓▓║╚▓▓╔╝▓▓║",
+						"  ▓▓║ ╚▓▓▓▓║▓▓▓▓▓▓▓╗╚▓▓▓▓▓▓╔╝ ╚▓▓▓▓╔╝ ▓▓║▓▓║ ╚═╝ ▓▓║",
+						"  ╚═╝  ╚═══╝╚══════╝ ╚═════╝   ╚═══╝  ╚═╝╚═╝     ╚═╝",
+					}, "\n"),
+					keys = {
+						{ icon = " ", key = "f", desc = "Find file", action = ":Telescope find_files" },
+						{ icon = " ", key = "r", desc = "Recent files", action = ":Telescope oldfiles" },
+						{ icon = " ", key = "g", desc = "Grep text", action = ":Telescope live_grep" },
+						{ icon = " ", key = "p", desc = "Projects", action = ":Telescope projects" },
+						{ icon = " ", key = "s", desc = "Restore session", action = function() require("persistence").load() end },
+						{ icon = " ", key = "c", desc = "Config", action = ":e $MYVIMRC" },
+						{ icon = " ", key = "l", desc = "Lazy", action = ":Lazy" },
+						{ icon = " ", key = "m", desc = "Mason", action = ":Mason" },
+						{ icon = " ", key = "q", desc = "Quit", action = ":qa" },
+					},
+				},
+				sections = {
+					{ section = "header" },
+					{ section = "keys", gap = 1, padding = 1 },
+					{ section = "startup" },
+				},
+			},
+		},
 	},
 
 	{
@@ -268,11 +230,7 @@ return {
 			{ "<leader>lo", "<cmd>Outline<CR>", desc = "Symbol outline" },
 		},
 		config = function()
-			local ok_ol, outline = pcall(require, "outline")
-			if not ok_ol then
-				return
-			end
-			outline.setup({
+			require("outline").setup({
 				outline_window = { width = 30, relative_width = false },
 				symbols = {
 					icons = {
