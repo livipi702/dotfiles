@@ -3,7 +3,7 @@ vim.g.loaded_netrwPlugin = 1
 vim.g.loaded_perl_provider = 0
 vim.g.loaded_ruby_provider = 0
 
-require("plugins.options")
+require("config.options")
 
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
 if not vim.uv.fs_stat(lazypath) then
@@ -28,8 +28,8 @@ require("lazy").setup("plugins", {
   rocks = { enabled = false },
 })
 
-require("plugins.keymaps")
+require("config.keymaps")
 
-require("plugins.autocmds")
+require("config.autocmds")
 
 require("utils.runner")
