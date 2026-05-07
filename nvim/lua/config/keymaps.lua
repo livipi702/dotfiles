@@ -6,7 +6,7 @@
 vim.keymap.set("n", "<leader>w", "<cmd>w<CR>", { silent = true, desc = "Save" })
 vim.keymap.set("n", "<leader>q", "<cmd>q<CR>", { silent = true, desc = "Quit" })
 vim.keymap.set("n", "<leader>x", "<cmd>bdelete<CR>", { silent = true, desc = "Close buffer" })
-vim.keymap.set("n", "<leader>h", "<cmd>nohlsearch<CR>", { silent = true, desc = "Clear search highlight" })
+vim.keymap.set("n", "<leader>n", "<cmd>nohlsearch<CR>", { silent = true, desc = "Clear search highlight" })
 
 vim.keymap.set({ "n", "v" }, "<leader>y", '"+y', { silent = true, desc = "Yank to clipboard" })
 vim.keymap.set({ "n", "v" }, "<leader>p", '"+p', { silent = true, desc = "Paste from clipboard" })
@@ -111,7 +111,7 @@ vim.api.nvim_create_autocmd("LspAttach", {
     -- BUFFER-LOCAL LSP MAPS
     -- ══════════════════════════════════════════════════════════════
     local function map(keys, fn, desc)
-      vim.keymap.set("n", keys, fn, { buffer = args.buf, silent = true, desc = desc })
+      vim.keymap.set("n", keys, fn, { buf = args.buf, silent = true, desc = desc })
     end
 
     if supports("textDocument/codeAction") then
@@ -190,11 +190,15 @@ vim.api.nvim_create_autocmd("LspDetach", {
 })
 
 vim.keymap.set("n", "[d", function()
-  vim.diagnostic.jump({ count = -1, on_jump = vim.diagnostic.open_float })
+  vim.diagnostic.jump({ count = -1, on_jump = function(_, bufnr)
+    vim.diagnostic.open_float({ bufnr = bufnr, focus = false })
+  end })
 end, { silent = true, desc = "Prev diagnostic" })
 
 vim.keymap.set("n", "]d", function()
-  vim.diagnostic.jump({ count = 1, on_jump = vim.diagnostic.open_float })
+  vim.diagnostic.jump({ count = 1, on_jump = function(_, bufnr)
+    vim.diagnostic.open_float({ bufnr = bufnr, focus = false })
+  end })
 end, { silent = true, desc = "Next diagnostic" })
 
 vim.keymap.set("n", "[q", "<cmd>cprev<CR>", { silent = true, desc = "Prev quickfix" })
