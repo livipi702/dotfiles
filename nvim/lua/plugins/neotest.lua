@@ -71,31 +71,22 @@ return {
       },
     },
     config = function()
-      local ok_nt, neotest = pcall(require, "neotest")
-      if not ok_nt then
-        return
-      end
+      local neotest = require("neotest")
       local adapters = {}
-      local ok_py2, np = pcall(require, "neotest-python")
-      if ok_py2 then
-        adapters[#adapters + 1] = np({
-          dap = { justMyCode = false },
-          runner = "pytest",
-          python = get_python(),
-        })
-      end
-      local ok_je, nj = pcall(require, "neotest-jest")
-      if ok_je then
-        adapters[#adapters + 1] = nj({ jestCommand = "npx jest" })
-      end
-      local ok_go, ngo = pcall(require, "neotest-go")
-      if ok_go then
-        adapters[#adapters + 1] = ngo({
-          experimental = {
-            test_table = true,
-          },
-        })
-      end
+      local np = require("neotest-python")
+      adapters[#adapters + 1] = np({
+        dap = { justMyCode = false },
+        runner = "pytest",
+        python = get_python(),
+      })
+      local nj = require("neotest-jest")
+      adapters[#adapters + 1] = nj({ jestCommand = "npx jest" })
+      local ngo = require("neotest-go")
+      adapters[#adapters + 1] = ngo({
+        experimental = {
+          test_table = true,
+        },
+      })
       neotest.setup({
         adapters = adapters,
         status = { virtual_text = true },

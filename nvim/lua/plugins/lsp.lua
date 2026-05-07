@@ -10,9 +10,7 @@ return {
 	{
 		"williamboman/mason.nvim",
 		cmd = { "Mason", "MasonInstall", "MasonUpdate" },
-		config = function()
-			require("mason").setup()
-		end,
+		opts = {},
 	},
 
 	{
@@ -50,12 +48,7 @@ return {
 			"b0o/schemastore.nvim",
 		},
 		config = function()
-			local ok_cmp, cmp_lsp = pcall(require, "cmp_nvim_lsp")
-			if not ok_cmp then
-				vim.notify("Failed to load cmp_nvim_lsp: " .. tostring(cmp_lsp), vim.log.levels.WARN)
-				return
-			end
-			local capabilities = cmp_lsp.default_capabilities()
+			local capabilities = require("cmp_nvim_lsp").default_capabilities()
 
 			-- ══════════════════════════════════════════════════════
 			-- CAPABILITIES

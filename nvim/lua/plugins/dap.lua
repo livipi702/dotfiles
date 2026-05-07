@@ -5,9 +5,9 @@ return {
   {
     "mfussenegger/nvim-dap",
     dependencies = {
-      "rcarriga/nvim-dap-ui",
+      { "rcarriga/nvim-dap-ui", opts = {} },
       "nvim-neotest/nvim-nio",
-      "theHamsta/nvim-dap-virtual-text",
+      { "theHamsta/nvim-dap-virtual-text", opts = {} },
       { "jay-babu/mason-nvim-dap.nvim", dependencies = { "williamboman/mason.nvim" } },
     },
     keys = {
@@ -87,8 +87,6 @@ return {
           end,
         },
       })
-      dapui.setup()
-      require("nvim-dap-virtual-text").setup()
 
       vim.sign_define("DapBreakpoint", { text = "●", texthl = "DiagnosticError" })
       vim.sign_define("DapBreakpointCondition", { text = "◆", texthl = "DiagnosticWarn" })

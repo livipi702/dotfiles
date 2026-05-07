@@ -123,12 +123,10 @@ return {
   {
     "nvim-treesitter/nvim-treesitter-context",
     event = "BufReadPost",
-    config = function()
-      require("treesitter-context").setup({
-        enable = true,
-        max_lines = 3,
-      })
-    end,
+    opts = {
+      enable = true,
+      max_lines = 3,
+    },
   },
 
   {

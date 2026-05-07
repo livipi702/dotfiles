@@ -8,17 +8,15 @@ local has_file = helpers.has_file
 return {
   {
     "akinsho/toggleterm.nvim",
-    config = function()
-      require("toggleterm").setup({
-        size = 15,
-        open_mapping = [[<C-t>]],
-        direction = "horizontal",
-        shade_terminals = true,
-        on_open = function(_)
-          vim.cmd("startinsert")
-        end,
-      })
-    end,
+    opts = {
+      size = 15,
+      open_mapping = [[<C-t>]],
+      direction = "horizontal",
+      shade_terminals = true,
+      on_open = function(_)
+        vim.cmd("startinsert")
+      end,
+    },
   },
 
   {

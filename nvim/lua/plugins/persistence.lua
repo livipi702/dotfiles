@@ -2,15 +2,9 @@ return {
   {
     "folke/persistence.nvim",
     event = "BufReadPre",
-    config = function()
-      local ok_pe, persistence = pcall(require, "persistence")
-      if not ok_pe then
-        return
-      end
-      persistence.setup({
-        options = { "buffers", "curdir", "tabpages", "winsize", "help", "globals", "skiprtp" },
-      })
-    end,
+    opts = {
+      options = { "buffers", "curdir", "tabpages", "winsize", "help", "globals", "skiprtp" },
+    },
     keys = {
       {
         "<leader>Ss",

@@ -57,13 +57,6 @@ return {
         },
       })
       telescope.load_extension("fzf")
-      vim.api.nvim_create_autocmd("User", {
-        pattern = "VeryLazy",
-        once = true,
-        callback = function()
-          telescope.load_extension("projects")
-        end,
-      })
     end,
   },
 }

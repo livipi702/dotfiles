@@ -22,13 +22,11 @@ return {
         end
       end
     end,
-    config = function()
-      require("nvim-tree").setup({
-        view = { width = 30 },
-        filters = { dotfiles = false },
-        hijack_netrw = true,
-        disable_netrw = true,
-      })
-    end,
+    opts = {
+      view = { width = 30 },
+      filters = { dotfiles = false },
+      hijack_netrw = true,
+      disable_netrw = true,
+    },
   },
 }

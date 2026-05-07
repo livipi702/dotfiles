@@ -13,7 +13,7 @@ return {
 		config = function()
 			local cmp = require("cmp")
 			local luasnip = require("luasnip")
-			local ok_k, lspkind = pcall(require, "lspkind")
+			local lspkind = require("lspkind")
 
 			require("luasnip.loaders.from_vscode").lazy_load()
 			luasnip.filetype_extend("ejs", { "html", "javascript", "css" })
@@ -60,7 +60,7 @@ return {
 					completion = cmp.config.window.bordered(),
 					documentation = cmp.config.window.bordered(),
 				},
-				formatting = ok_k and {
+				formatting = {
 					format = lspkind.cmp_format({
 						mode = "symbol_text",
 						maxwidth = 50,
@@ -74,7 +74,7 @@ return {
 							["vim-dadbod-completion"] = "[DB]",
 						},
 					}),
-				} or nil,
+				},
 			})
 		end,
 	},

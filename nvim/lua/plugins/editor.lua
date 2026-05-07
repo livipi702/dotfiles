@@ -1,7 +1,4 @@
 
-local helpers = require("utils.helpers")
-local is_dir = helpers.is_dir
-
 local lang = require("utils.lang-config")
 local CONFORM_BY_FT, CUSTOM_FORMATTERS = lang.get_conform_config()
 local LINTERS_BY_FT = lang.get_linters_by_ft()
@@ -10,44 +7,13 @@ return {
   {
     "windwp/nvim-autopairs",
     event = "InsertEnter",
-    config = function()
-      require("nvim-autopairs").setup({})
-    end,
+    opts = {},
   },
   {
     "kylechui/nvim-surround",
     event = "VeryLazy",
-    config = function()
-      require("nvim-surround").setup({})
-    end,
+    opts = {},
   },
-  {
-    "lukas-reineke/indent-blankline.nvim",
-    main = "ibl",
-    config = function()
-      require("ibl").setup({
-        indent = { char = "│" },
-      })
-    end,
-  },
-
-  {
-    "RRethy/vim-illuminate",
-    config = function()
-      require("illuminate").configure({
-        delay = 200,
-        filetypes_exclude = {
-          "NvimTree",
-          "snacks_dashboard",
-          "toggleterm",
-          "dbui",
-          "qf",
-          "help",
-        },
-      })
-    end,
-  },
-
   -- ══════════════════════════════════════════════════════
   -- BREADCRUMBS
   -- ══════════════════════════════════════════════════════
@@ -112,29 +78,13 @@ return {
         formatters = CUSTOM_FORMATTERS,
         notify_on_error = false,
         notify_no_formatters = false,
-        format_on_save = function()
+        format_on_save = function(bufnr)
           if not vim.g.autoformat then
             return
           end
-          local bufname = vim.api.nvim_buf_get_name(0)
-          if bufname == "" or is_dir(bufname) then
-            return
-          end
-          local ft = vim.bo.filetype
-          if ft == "" then
-            return
-          end
-          if not CONFORM_BY_FT[ft] then
-            return
-          end
-
-          local max_size = 1024 * 1024
+          local bufname = vim.api.nvim_buf_get_name(bufnr)
           local stat = vim.uv.fs_stat(bufname)
-          if stat and stat.size > max_size then
-            vim.notify(
-              ("Skipping format: file too large (%s bytes)"):format(stat.size),
-              vim.log.levels.DEBUG
-            )
+          if stat and stat.size > 1024 * 1024 then
             return
           end
           return { timeout_ms = 1000, lsp_format = "fallback" }
@@ -192,16 +142,12 @@ return {
     "folke/todo-comments.nvim",
     event = { "BufReadPost", "BufNewFile" },
     dependencies = { "nvim-lua/plenary.nvim" },
-    config = function()
-      require("todo-comments").setup()
-      vim.keymap.set("n", "<leader>ft", "<cmd>TodoTelescope<CR>", { silent = true, desc = "Todo comments" })
-      vim.keymap.set("n", "]t", function()
-        require("todo-comments").jump_next()
-      end, { silent = true, desc = "Next todo" })
-      vim.keymap.set("n", "[t", function()
-        require("todo-comments").jump_prev()
-      end, { silent = true, desc = "Prev todo" })
-    end,
+    opts = {},
+    keys = {
+      { "<leader>ft", "<cmd>TodoTelescope<CR>", desc = "Todo comments" },
+      { "]t", function() require("todo-comments").jump_next() end, desc = "Next todo" },
+      { "[t", function() require("todo-comments").jump_prev() end, desc = "Prev todo" },
+    },
   },
 
   {
@@ -240,9 +186,7 @@ return {
   {
     "smjonas/inc-rename.nvim",
     cmd = "IncRename",
-    config = function()
-      require("inc_rename").setup({})
-    end,
+    opts = {},
   },
 
   -- ══════════════════════════════════════════════════════
@@ -277,35 +221,6 @@ return {
         tailwind = true,
         sass = { enable = false },
       },
-    },
-  },
-
-  -- ══════════════════════════════════════════════════════
-  -- ZEN MODE
-  -- ══════════════════════════════════════════════════════
-  {
-    "folke/zen-mode.nvim",
-    keys = { { "<leader>zz", "<cmd>ZenMode<CR>", desc = "Zen mode" } },
-    opts = {
-      window = {
-        backdrop = 0.95,
-        width = 120,
-        height = 0.85,
-      },
-      plugins = {
-        options = { enabled = true, ruler = false, showcmd = false },
-        twilight = { enabled = false },
-        gitsigns = { enabled = true },
-        tmux = { enabled = false },
-        alacritty = { enabled = false },
-        kitty = { enabled = false },
-      },
-      on_open = function()
-        vim.notify("Zen mode ON", vim.log.levels.INFO)
-      end,
-      on_close = function()
-        vim.notify("Zen mode OFF", vim.log.levels.INFO)
-      end,
     },
   },
 

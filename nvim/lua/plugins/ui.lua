@@ -4,41 +4,37 @@ return {
 		"nvim-lualine/lualine.nvim",
 		event = "VeryLazy",
 		dependencies = { "nvim-tree/nvim-web-devicons" },
-		config = function()
-			require("lualine").setup({
-				options = {
-					theme = "tokyonight",
-					section_separators = { left = "", right = "" },
-					component_separators = { left = "", right = "" },
-				},
-				sections = {
-					lualine_a = { "mode" },
-					lualine_b = { "branch", "diff", "diagnostics" },
-					lualine_c = { { "filename", path = 1 } },
-					lualine_x = { "encoding", "filetype" },
-					lualine_y = { "progress" },
-					lualine_z = { "location" },
-				},
-			})
-		end,
+		opts = {
+			options = {
+				theme = "tokyonight",
+				section_separators = { left = "", right = "" },
+				component_separators = { left = "", right = "" },
+			},
+			sections = {
+				lualine_a = { "mode" },
+				lualine_b = { "branch", "diff", "diagnostics" },
+				lualine_c = { { "filename", path = 1 } },
+				lualine_x = { "encoding", "filetype" },
+				lualine_y = { "progress" },
+				lualine_z = { "location" },
+			},
+		},
 	},
 
 	{
 		"akinsho/bufferline.nvim",
 		event = "VeryLazy",
 		dependencies = { "nvim-tree/nvim-web-devicons" },
-		config = function()
-			require("bufferline").setup({
-				options = {
-					diagnostics = "nvim_lsp",
-					offsets = {
-						{ filetype = "NvimTree", text = "Explorer", padding = 1 },
-					},
-					show_close_icon = false,
-					show_buffer_close_icons = false,
+		opts = {
+			options = {
+				diagnostics = "nvim_lsp",
+				offsets = {
+					{ filetype = "NvimTree", text = "Explorer", padding = 1 },
 				},
-			})
-		end,
+				show_close_icon = false,
+				show_buffer_close_icons = false,
+			},
+		},
 	},
 
 	-- ═══════════════════════════════════════════════════════════════════════════════════════
@@ -77,20 +73,6 @@ return {
 		event = "VeryLazy",
 		dependencies = {
 			"MunifTanjim/nui.nvim",
-			{
-				"rcarriga/nvim-notify",
-				opts = {
-					timeout = 3000,
-					max_height = function()
-						return math.floor(vim.o.lines * 0.75)
-					end,
-					max_width = function()
-						return math.floor(vim.o.columns * 0.75)
-					end,
-					render = "wrapped-compact",
-					stages = "fade",
-				},
-			},
 		},
 		config = function()
 			require("noice").setup({
@@ -117,7 +99,7 @@ return {
 			})
 		end,
 		keys = {
-			{ "<leader>fn", "<cmd>Telescope notify<CR>", desc = "Notifications" },
+			{ "<leader>fn", function() Snacks.notifier.show_history() end, desc = "Notifications" },
 			{
 				"<leader>nd",
 				function()
@@ -132,8 +114,43 @@ return {
 		"folke/snacks.nvim",
 		priority = 1000,
 		lazy = false,
+		keys = {
+			{ "<leader>gg", function() Snacks.lazygit() end, desc = "Lazygit" },
+			{ "<leader>zz", function() Snacks.zen() end, desc = "Zen mode" },
+			{ "<leader>fp", function() Snacks.picker.projects() end, desc = "Projects" },
+		},
 		opts = {
 			bigfile = { enabled = true },
+			indent = { enabled = true },
+			notifier = {
+				enabled = true,
+				timeout = 3000,
+			},
+			lazygit = { enabled = true },
+			picker = { enabled = true },
+			words = {
+				enabled = true,
+				notify = false,
+				filter = function(buf)
+					local exclude = {
+						["NvimTree"] = true,
+						["snacks_dashboard"] = true,
+						["toggleterm"] = true,
+						["dbui"] = true,
+						["qf"] = true,
+						["help"] = true,
+					}
+					return vim.g.snacks_words ~= false
+						and vim.b[buf].snacks_words ~= false
+						and not exclude[vim.bo[buf].filetype]
+				end,
+			},
+			zen = {
+				enabled = true,
+				win = {
+					backdrop = { transparent = true, blend = 5 },
+				},
+			},
 			dashboard = {
 				preset = {
 					header = table.concat({
@@ -149,7 +166,7 @@ return {
 						{ icon = " ", key = "f", desc = "Find file", action = ":Telescope find_files" },
 						{ icon = " ", key = "r", desc = "Recent files", action = ":Telescope oldfiles" },
 						{ icon = " ", key = "g", desc = "Grep text", action = ":Telescope live_grep" },
-						{ icon = " ", key = "p", desc = "Projects", action = ":Telescope projects" },
+						{ icon = " ", key = "p", desc = "Projects", action = function() Snacks.picker.projects() end },
 						{ icon = " ", key = "s", desc = "Restore session", action = function() require("persistence").load() end },
 						{ icon = " ", key = "c", desc = "Config", action = ":e $MYVIMRC" },
 						{ icon = " ", key = "l", desc = "Lazy", action = ":Lazy" },
@@ -169,9 +186,9 @@ return {
 	{
 		"folke/which-key.nvim",
 		event = "VeryLazy",
+		opts = { delay = 300 },
 		config = function()
 			local wk = require("which-key")
-			wk.setup({ delay = 300 })
 			wk.add({
 				{ "<leader>f", group = "Find" },
 				{ "<leader>c", group = "Code" },
@@ -192,12 +209,12 @@ return {
 	{
 		"folke/tokyonight.nvim",
 		priority = 1000,
+		opts = {
+			style = "night",
+			transparent = false,
+			terminal_colors = true,
+		},
 		config = function()
-			require("tokyonight").setup({
-				style = "night",
-				transparent = false,
-				terminal_colors = true,
-			})
 			vim.cmd("colorscheme tokyonight-night")
 		end,
 	},
@@ -229,28 +246,26 @@ return {
 		keys = {
 			{ "<leader>lo", "<cmd>Outline<CR>", desc = "Symbol outline" },
 		},
-		config = function()
-			require("outline").setup({
-				outline_window = { width = 30, relative_width = false },
-				symbols = {
-					icons = {
-						File = { icon = "\u{f088}", hl = "Identifier" },
-						Module = { icon = "\u{f1a7}", hl = "Include" },
-						Namespace = { icon = "\u{f217}", hl = "Include" },
-						Package = { icon = "\u{f17d}", hl = "Include" },
-						Class = { icon = "\u{e0b2}", hl = "Type" },
-						Method = { icon = "\u{0192}", hl = "Function" },
-						Property = { icon = "\u{e08c}", hl = "Identifier" },
-						Field = { icon = "\u{f124}", hl = "Identifier" },
-						Constructor = { icon = "\u{e0c7}", hl = "Special" },
-						Enum = { icon = "\u{e0af}", hl = "Type" },
-						Interface = { icon = "\u{f170}", hl = "Type" },
-						Function = { icon = "\u{f292}", hl = "Function" },
-						Variable = { icon = "\u{e08f}", hl = "Constant" },
-						Constant = { icon = "\u{e03f}", hl = "Constant" },
-					},
+		opts = {
+			outline_window = { width = 30, relative_width = false },
+			symbols = {
+				icons = {
+					File = { icon = "\u{f088}", hl = "Identifier" },
+					Module = { icon = "\u{f1a7}", hl = "Include" },
+					Namespace = { icon = "\u{f217}", hl = "Include" },
+					Package = { icon = "\u{f17d}", hl = "Include" },
+					Class = { icon = "\u{e0b2}", hl = "Type" },
+					Method = { icon = "\u{0192}", hl = "Function" },
+					Property = { icon = "\u{e08c}", hl = "Identifier" },
+					Field = { icon = "\u{f124}", hl = "Identifier" },
+					Constructor = { icon = "\u{e0c7}", hl = "Special" },
+					Enum = { icon = "\u{e0af}", hl = "Type" },
+					Interface = { icon = "\u{f170}", hl = "Type" },
+					Function = { icon = "\u{f292}", hl = "Function" },
+					Variable = { icon = "\u{e08f}", hl = "Constant" },
+					Constant = { icon = "\u{e03f}", hl = "Constant" },
 				},
-			})
-		end,
+			},
+		},
 	},
 }
