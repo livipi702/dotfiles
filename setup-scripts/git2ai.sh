@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-# Git2AI: Pure AI Lore & Reindexing Engine (v4.1.0 - Endgame)
-# Ruthlessly optimized for LLM ingestion, historical comprehension, and full-stack ground-truth reindexing.
+# Git2AI: Pure AI Lore & Reindexing Engine (v4.2.0 - Universal)
+# Fully dynamic, repo-agnostic context exporter for LLMs.
 
 export LC_ALL=C
 set +o histexpand 2>/dev/null || true
@@ -98,10 +98,23 @@ fi
 
 echo "Processing $total_commits commits for AI Context Engine..."
 
+# ==========================================
+# DYNAMIC FILTERS (Repo-Agnostic)
+# ==========================================
 is_ignored() {
   local file=$1
-  for pat in node_modules vendor build dist coverage .git .idea .vscode; do
-    if [[ "$file" == "$pat"/* || "$file" == *"/$pat/"* || "$file" == *"/$pat" || "$file" == "$pat" ]]; then return 0; fi
+  local ignore_dirs=(
+    node_modules vendor build dist out coverage .git .svn .hg .bzr
+    .idea .vscode .vs .eclipse .settings .DS_Store .docker .terraform
+    .direnv .local .config .nuget .cargo .rustup .npm .yarn .pnpm-store
+    .pnp bower_components .cache .parcel-cache .turbo .vercel .netlify
+    __pycache__ .mypy_cache .pytest_cache .ruff_cache .venv venv env .tox .nox .eggs site-packages .ipynb_checkpoints
+    .gradle .mvn .classpath .bundle target
+  )
+  for pat in "${ignore_dirs[@]}"; do
+    if [[ "$file" == "$pat"/* || "$file" == *"/$pat/"* || "$file" == *"/$pat" || "$file" == "$pat" ]]; then
+      return 0
+    fi
   done
   for pat in "${CUSTOM_IGNORES[@]}"; do
     if [[ "$file" == *"$pat"* ]]; then return 0; fi
@@ -120,7 +133,7 @@ is_binary() {
 is_lockfile() {
   local file=$1
   case "$file" in
-  package-lock.json | yarn.lock | pnpm-lock.yaml | composer.lock | Cargo.lock | Gemfile.lock | poetry.lock | Pipfile.lock) return 0 ;;
+  package-lock.json | yarn.lock | pnpm-lock.yaml | composer.lock | Cargo.lock | Gemfile.lock | poetry.lock | Pipfile.lock | lazy-lock.json | bun.lockb) return 0 ;;
   esac
   return 1
 }
@@ -134,7 +147,7 @@ get_lang_fence() {
   *.php) echo "php" ;; *.swift) echo "swift" ;; *.kt | *.kts) echo "kotlin" ;; *.sh | *.bash | *.zsh) echo "bash" ;;
   *.html | *.htm) echo "html" ;; *.css | *.scss | *.sass | *.less) echo "css" ;; *.json) echo "json" ;;
   *.xml) echo "xml" ;; *.yml | *.yaml) echo "yaml" ;; *.md | *.markdown) echo "markdown" ;; *.sql) echo "sql" ;;
-  *.ejs) echo "ejs" ;; *.vue) echo "vue" ;; *.svelte) echo "svelte" ;; *) echo "text" ;;
+  *.ejs) echo "ejs" ;; *.vue) echo "vue" ;; *.svelte) echo "svelte" ;; *.lua) echo "lua" ;; *) echo "text" ;;
   esac
 }
 
@@ -294,32 +307,46 @@ out "  </file_lineage>" "$TMP_DIR/map.xml"
 out "</repository_map>" "$TMP_DIR/map.xml"
 
 # ==========================================
-# POST-PROCESSING: CURRENT STATE SNAPSHOT (THE REINDEXER)
+# POST-PROCESSING: CURRENT STATE SNAPSHOT (THE UNIVERSAL REINDEXER)
 # ==========================================
 out "<current_state>" "$TMP_DIR/snapshot.xml"
-out "  <note>Full code of core architectural and frontend files at the latest commit. Use this as the absolute ground truth for writing new features or refactoring.</note>" "$TMP_DIR/snapshot.xml"
+out "  <note>Full code of core source files at the latest commit. Use this as the absolute ground truth for writing new features or refactoring.</note>" "$TMP_DIR/snapshot.xml"
 
-# Grab core logic, frontend views, and client-side assets at HEAD (Excluding binaries/minified files)
-git ls-tree -r --name-only "$lang_target_commit" | grep -E '^(models/|controllers/|routes/|views/|public/stylesheets/|public/javascripts/|middleware\.js|index\.js|app\.js|server\.js|schemas\.js|cloudinary/|utils/|config/|lib/|src/|app/|package\.json|requirements\.txt|go\.mod|Cargo\.toml|Gemfile)' | grep -v -E '(\.min\.|build/|dist/|node_modules/|\.png|\.jpg|\.gif|\.svg|\.webp|\.mp4|\.mp3)' | while read -r file; do
-  xml_file=$(xml_escape_attr "$file")
-  fence=$(get_lang_fence "$file")
+# Universal Exclusion Regex for Directories & Lockfiles
+EXCLUDE_DIRS_AND_LOCKS='(node_modules/|vendor/|target/|build/|dist/|out/|\.next/|\.nuxt/|\.output/|\.svelte-kit/|\.astro/|\.docusaurus/|\.vuepress/|coverage/|\.nyc_output/|__pycache__/|\.mypy_cache/|\.pytest_cache/|\.ruff_cache/|\.venv/|venv/|env/|\.env/|\.tox/|\.nox/|\.eggs/|site-packages/|\.ipynb_checkpoints/|\.gradle/|\.mvn/|\.classpath/|\.settings/|\.bundle/|\.idea/|\.vscode/|\.vs/|\.eclipse/|\.DS_Store|\.Trash/|\.docker/|\.terraform/|\.direnv/|\.local/|\.config/|\.nuget/|\.cargo/|\.rustup/|\.git/|\.svn/|\.hg/|\.bzr/|\.npm/|\.yarn/|\.pnpm-store/|\.pnp|bower_components/|\.cache/|\.parcel-cache/|\.turbo/|\.vercel/|\.netlify/|package-lock\.json|yarn\.lock|pnpm-lock\.yaml|bun\.lockb|Gemfile\.lock|Cargo\.lock|poetry\.lock|Pipfile\.lock|composer\.lock|uv\.lock|pdm\.lock|lazy-lock\.json)'
 
-  git show "$lang_target_commit:$file" 2>/dev/null >"$TMP_DIR/snapshot_file.txt"
-  line_count=$(awk 'END{print NR}' "$TMP_DIR/snapshot_file.txt")
+# Universal Exclusion Regex for Binaries, Media, and Minified Files
+EXCLUDE_BINARIES_AND_MEDIA='(\.min\.|\.map$|\.png$|\.jpg$|\.jpeg$|\.gif$|\.svg$|\.webp$|\.avif$|\.bmp$|\.ico$|\.tiff$|\.mp3$|\.mp4$|\.wav$|\.flac$|\.ogg$|\.avi$|\.mov$|\.zip$|\.tar$|\.gz$|\.bz2$|\.xz$|\.7z$|\.rar$|\.class$|\.o$|\.obj$|\.pyc$|\.pyo$|\.exe$|\.dll$|\.so$|\.dylib$|\.a$|\.lib$|\.wasm$|\.keystore$|\.p12$|\.jks$|\.sqlite$|\.db$|\.woff$|\.woff2$|\.ttf$|\.eot$|\.otf$|\.pdf$|\.doc$|\.docx$|\.xls$|\.xlsx$|\.ppt$|\.pptx$)'
 
-  out "  <file path=\"$xml_file\" lang=\"$fence\" lines=\"$line_count\">" "$TMP_DIR/snapshot.xml"
-  out "    <![CDATA[" "$TMP_DIR/snapshot.xml"
+# Grab ALL tracked text files, aggressively filtering out known junk.
+git ls-tree -r --name-only "$lang_target_commit" |
+  grep -v -E "$EXCLUDE_DIRS_AND_LOCKS" |
+  grep -v -E "$EXCLUDE_BINARIES_AND_MEDIA" |
+  while read -r file; do
 
-  if [ "$line_count" -gt "$MAX_FILE_LINES" ]; then
-    head -n "$MAX_FILE_LINES" "$TMP_DIR/snapshot_file.txt" >>"$TMP_DIR/snapshot.xml"
-    printf '... [TRUNCATED FOR CONTEXT LIMIT] ...\n' >>"$TMP_DIR/snapshot.xml"
-  else
-    cat "$TMP_DIR/snapshot_file.txt" >>"$TMP_DIR/snapshot.xml"
-  fi
+    xml_file=$(xml_escape_attr "$file")
+    fence=$(get_lang_fence "$file")
 
-  out "    ]]>" "$TMP_DIR/snapshot.xml"
-  out "  </file>" "$TMP_DIR/snapshot.xml"
-done
+    git show "$lang_target_commit:$file" 2>/dev/null >"$TMP_DIR/snapshot_file.txt"
+
+    # Skip if git show failed (e.g., submodule or weird gitlink) or file is empty
+    [ ! -s "$TMP_DIR/snapshot_file.txt" ] && continue
+
+    line_count=$(awk 'END{print NR}' "$TMP_DIR/snapshot_file.txt")
+
+    out "  <file path=\"$xml_file\" lang=\"$fence\" lines=\"$line_count\">" "$TMP_DIR/snapshot.xml"
+    out "    <![CDATA[" "$TMP_DIR/snapshot.xml"
+
+    if [ "$line_count" -gt "$MAX_FILE_LINES" ]; then
+      head -n "$MAX_FILE_LINES" "$TMP_DIR/snapshot_file.txt" >>"$TMP_DIR/snapshot.xml"
+      printf '\n... [TRUNCATED FOR CONTEXT LIMIT] ...\n' >>"$TMP_DIR/snapshot.xml"
+    else
+      cat "$TMP_DIR/snapshot_file.txt" >>"$TMP_DIR/snapshot.xml"
+    fi
+
+    out "    ]]>" "$TMP_DIR/snapshot.xml"
+    out "  </file>" "$TMP_DIR/snapshot.xml"
+  done
 out "</current_state>" "$TMP_DIR/snapshot.xml"
 
 # ==========================================
