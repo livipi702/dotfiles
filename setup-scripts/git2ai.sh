@@ -1,22 +1,22 @@
 #!/usr/bin/env bash
 
-# Git2AI: Pure AI Lore & Reindexing Engine (v4.2.0 - Universal)
-# Fully dynamic, repo-agnostic context exporter for LLMs.
-
 export LC_ALL=C
-set +o histexpand 2>/dev/null || true
+set -euo pipefail
 
-if [ "${BASH_VERSINFO[0]}" -lt 4 ]; then
-  echo "Error: bash 4+ required (found $BASH_VERSION)" >&2
+if ! command -v python3 &>/dev/null; then
+  echo "Error: python3 is required to run this script." >&2
   exit 1
 fi
 
-# Default configurations
+if ! command -v git &>/dev/null; then
+  echo "Error: git CLI is required to run this script." >&2
+  exit 1
+fi
+
 FROM_COMMIT=""
 TO_COMMIT=""
-MAX_FILE_LINES=1000
-MAX_DIFF_LINES=500
-OUTPUT_FILE="git2ai_ai_context.txt"
+MAX_FILE_LINES=1500
+OUTPUT_FILE="git2ai_context.txt"
 REPO_DIR="."
 CUSTOM_IGNORES=()
 
@@ -32,10 +32,6 @@ while [[ $# -gt 0 ]]; do
     ;;
   --max-file-lines)
     MAX_FILE_LINES="$2"
-    shift 2
-    ;;
-  --max-diff-lines)
-    MAX_DIFF_LINES="$2"
     shift 2
     ;;
   -o | --output)
@@ -54,310 +50,450 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [ ! -d "$REPO_DIR/.git" ]; then
-  echo "Error: $REPO_DIR is not a git repository."
+  echo "Error: '$REPO_DIR' is not a valid git repository." >&2
   exit 1
 fi
 
 cd "$REPO_DIR"
 
-TMP_DIR=$(mktemp -d)
-trap 'rm -rf "$TMP_DIR"' EXIT
-
-HISTORY_FILE="$TMP_DIR/history.xml"
-FILE_EVENTS="$TMP_DIR/file_events.tsv"
-TOC_FILE="$TMP_DIR/toc.tsv"
-
-touch "$FILE_EVENTS" "$TOC_FILE"
-
-xml_escape_attr() {
-  local s="$1"
-  s="${s//&/&amp;}"
-  s="${s//\"/&quot;}"
-  s="${s//</&lt;}"
-  s="${s//>/&gt;}"
-  printf '%s' "$s"
-}
-
-if [ -n "$FROM_COMMIT" ] && [ -n "$TO_COMMIT" ]; then
-  git rev-list --reverse --ancestry-path "$FROM_COMMIT"^.."$TO_COMMIT" >"$TMP_DIR/commits.txt" 2>/dev/null || git rev-list --reverse "$FROM_COMMIT".."$TO_COMMIT" >"$TMP_DIR/commits.txt"
-elif [ -n "$FROM_COMMIT" ]; then
-  git rev-list --reverse "$FROM_COMMIT"..HEAD >"$TMP_DIR/commits.txt"
-elif [ -n "$TO_COMMIT" ]; then
-  git rev-list --reverse "$TO_COMMIT" >"$TMP_DIR/commits.txt"
-else
-  git rev-list --reverse HEAD >"$TMP_DIR/commits.txt"
-fi
-
-mapfile -t COMMITS <"$TMP_DIR/commits.txt"
-total_commits=${#COMMITS[@]}
-
-if [ "$total_commits" -eq 0 ]; then
-  echo "No commits found."
-  exit 0
-fi
-
-echo "Processing $total_commits commits for AI Context Engine..."
-
-# ==========================================
-# DYNAMIC FILTERS (Repo-Agnostic)
-# ==========================================
-is_ignored() {
-  local file=$1
-  local ignore_dirs=(
-    node_modules vendor build dist out coverage .git .svn .hg .bzr
-    .idea .vscode .vs .eclipse .settings .DS_Store .docker .terraform
-    .direnv .local .config .nuget .cargo .rustup .npm .yarn .pnpm-store
-    .pnp bower_components .cache .parcel-cache .turbo .vercel .netlify
-    __pycache__ .mypy_cache .pytest_cache .ruff_cache .venv venv env .tox .nox .eggs site-packages .ipynb_checkpoints
-    .gradle .mvn .classpath .bundle target
+JOINED_IGNORES=""
+if [ ${#CUSTOM_IGNORES[@]} -gt 0 ]; then
+  JOINED_IGNORES=$(
+    IFS=$'\t'
+    printf '%s' "${CUSTOM_IGNORES[*]}"
   )
-  for pat in "${ignore_dirs[@]}"; do
-    if [[ "$file" == "$pat"/* || "$file" == *"/$pat/"* || "$file" == *"/$pat" || "$file" == "$pat" ]]; then
-      return 0
-    fi
-  done
-  for pat in "${CUSTOM_IGNORES[@]}"; do
-    if [[ "$file" == *"$pat"* ]]; then return 0; fi
-  done
-  return 1
+fi
+
+# ==========================================
+# ADVANCED PYTHON CONTEXT ENGINE
+# ==========================================
+python3 - "$FROM_COMMIT" "$TO_COMMIT" "$MAX_FILE_LINES" "$OUTPUT_FILE" "$JOINED_IGNORES" <<'EOF'
+import sys
+import os
+import subprocess
+import re
+import fnmatch
+import itertools
+import json
+import shutil
+import tempfile
+from collections import Counter
+from xml.sax.saxutils import escape as xml_escape
+
+FROM_COMMIT = sys.argv[1]
+TO_COMMIT = sys.argv[2]
+MAX_FILE_LINES = int(sys.argv[3])
+OUTPUT_FILE = sys.argv[4]
+CUSTOM_IGNORES = sys.argv[5].split('\t') if sys.argv[5] else []
+
+BINARY_EXTS = {
+    'png','jpg','jpeg','gif','pdf','zip','tar','gz','exe','dll','woff','woff2','ttf','eot','mp3','mp4','mov','avi',
+    'bin','so','dylib','class','pyc','pyo','o','obj','a','lib','wasm','keystore','sqlite','db','ico',
+    'svg','webp','bmp','tiff','mpg','mpeg','flv','ogg','wav','flac','jar','war','ear','apk','aab','app','dmg','iso',
+    'pem', 'crt', 'key', 'p12', 'jks', 'pfx', 'asc', 'gpg', 'img', '7z', 'rar', 'lockb'
+}
+IGNORE_DIRS = {
+    'node_modules','vendor','build','dist','out','coverage','.git','.svn','.hg','.bzr','.idea','.vscode','.vs',
+    '.eclipse','.settings','.DS_Store','.docker','.terraform','.direnv','.local','.config','.nuget','.cargo',
+    '.rustup','.npm','.yarn','.pnpm-store','.pnp','bower_components','.cache','.parcel-cache','.turbo','.vercel',
+    '.netlify','__pycache__','.mypy_cache','.pytest_cache','.ruff_cache','.venv','venv','env','.tox','.nox',
+    '.eggs','site-packages','.ipynb_checkpoints','.gradle','.mvn','.classpath','.bundle','target'
 }
 
-is_binary() {
-  local file=$1
-  case "$file" in
-  *.png | *.jpg | *.jpeg | *.gif | *.pdf | *.zip | *.tar | *.gz | *.exe | *.dll | *.woff | *.woff2 | *.ttf | *.eot | *.mp3 | *.mp4 | *.mov | *.avi | *.bin | *.so | *.dylib | *.class | *.pyc | *.pyo | *.o | *.obj | *.a | *.lib | *.wasm | *.keystore | *.p12 | *.jks | *.sqlite | *.db | *.ico | *.svg | *.webp | *.bmp | *.tiff | *.mpg | *.mpeg | *.flv | *.ogg | *.wav | *.flac | *.jar | *.war | *.ear | *.apk | *.aab | *.app | *.dmg | *.iso | *.img | *.7z | *.rar | *.lockb | *.pem | *.crt | *.key) return 0 ;;
-  esac
-  return 1
-}
+# ---------------------------------------------------------
+# DEPENDENCY DETECTION: Universal Ctags
+# ---------------------------------------------------------
+HAS_CTAGS = False
+if shutil.which("ctags"):
+    try:
+        ctags_test = subprocess.run(["ctags", "--version"], capture_output=True, text=True, timeout=2)
+        if "Universal Ctags" in ctags_test.stdout:
+            HAS_CTAGS = True
+    except Exception:
+        pass
 
-is_lockfile() {
-  local file=$1
-  case "$file" in
-  package-lock.json | yarn.lock | pnpm-lock.yaml | composer.lock | Cargo.lock | Gemfile.lock | poetry.lock | Pipfile.lock | lazy-lock.json | bun.lockb) return 0 ;;
-  esac
-  return 1
-}
+# ---------------------------------------------------------
+# REGEX FALLBACK
+# ---------------------------------------------------------
+SKELETON_REGEX = re.compile(
+    r'^\s*(?:export\s+|public\s+|private\s+|protected\s+|static\s+|async\s+|abstract\s+|declare\s+|pub\s+)*(?:class|def|function|func|interface|struct|type|enum|protocol|extension|trait|impl|namespace)\s+[A-Za-z_]'
+    r'|^\s*export\s+(?:const|let|var|default)\s+'
+    r'|^\s*(?:public|private|protected)\s+(?:static\s+)?(?:[A-Za-z_<>]+\s+)[A-Za-z_]+\s*\('
+    r'|^\s*type\s+[A-Za-z_]+\s*='
+    r'|^\s*const\s+[A-Za-z_]+\s*=\s*(?:async\s+)?(?:\([^)]*\)\s*=>|=>)'
+    r'|^\s*func\s+(?:\([^)]*\)\s*)?[A-Za-z_]+\s*\('
+    r'|^\s*@(?:property|staticmethod|classmethod|dataclass|override|Injectable)',
+    re.MULTILINE
+)
 
-get_lang_fence() {
-  local file="$1"
-  case "$file" in
-  *.js | *.jsx | *.mjs | *.cjs) echo "javascript" ;; *.ts | *.tsx | *.mts | *.cts) echo "typescript" ;;
-  *.py) echo "python" ;; *.rb) echo "ruby" ;; *.java) echo "java" ;; *.c | *.h) echo "c" ;;
-  *.cpp | *.hpp | *.cc | *.cxx) echo "cpp" ;; *.cs) echo "csharp" ;; *.go) echo "go" ;; *.rs) echo "rust" ;;
-  *.php) echo "php" ;; *.swift) echo "swift" ;; *.kt | *.kts) echo "kotlin" ;; *.sh | *.bash | *.zsh) echo "bash" ;;
-  *.html | *.htm) echo "html" ;; *.css | *.scss | *.sass | *.less) echo "css" ;; *.json) echo "json" ;;
-  *.xml) echo "xml" ;; *.yml | *.yaml) echo "yaml" ;; *.md | *.markdown) echo "markdown" ;; *.sql) echo "sql" ;;
-  *.ejs) echo "ejs" ;; *.vue) echo "vue" ;; *.svelte) echo "svelte" ;; *.lua) echo "lua" ;; *) echo "text" ;;
-  esac
-}
+def is_ignored(path):
+    parts = path.split('/')
+    if any(d in parts for d in IGNORE_DIRS): return True
+    for pat in CUSTOM_IGNORES:
+        if fnmatch.fnmatch(path, pat) or fnmatch.fnmatch(path, f"*/{pat}*"): return True
+    ext = path.split('.')[-1].lower() if '.' in path else ''
+    if ext in BINARY_EXTS: return True
+    return False
 
-declare -A file_to_id
-file_id_counter=0
+def is_identity_file(path):
+    name = os.path.basename(path).lower()
+    if name in (
+        'package.json', 'cargo.toml', 'pyproject.toml', 'go.mod', 'dockerfile', 'makefile', 'docker-compose.yml',
+        'tsconfig.json', 'jest.config.js', 'jest.config.ts', 'vite.config.ts', 'vite.config.js', 
+        'webpack.config.js', 'webpack.config.ts', 'babel.config.json', 'babel.config.js', 
+        'requirements.txt', 'setup.py', 'pom.xml', 'build.gradle', '.gitlab-ci.yml', 'azure-pipelines.yml', 'jenkinsfile'
+    ): return True
+    if name.startswith('readme') or name.startswith('contributing') or name.startswith('changelog'): return True
+    if '.github/workflows' in path: return True
+    return False
 
-get_file_id() {
-  local file=$1 status=$2 prev_file=$3
-  if [ "$status" == "R" ] && [ -n "${file_to_id[$prev_file]}" ]; then
-    local id="${file_to_id[$prev_file]}"
-    file_to_id["$file"]="$id"
-    _FILE_ID_RESULT="$id"
-  elif [ "$status" == "A" ] || [ -z "${file_to_id[$file]}" ]; then
-    file_id_counter=$((file_id_counter + 1))
-    local id="F$file_id_counter"
-    file_to_id["$file"]="$id"
-    _FILE_ID_RESULT="$id"
-  else
-    _FILE_ID_RESULT="${file_to_id[$file]}"
-  fi
-}
+def is_generated(path, content_bytes):
+    name = os.path.basename(path).lower()
+    if name.endswith('.min.js') or name.endswith('.min.css') or name.endswith('.tsbuildinfo') or name.endswith('.map'): return True
+    if name.endswith('-lock.json') or name in ('yarn.lock', 'pnpm-lock.yaml', 'poetry.lock', 'go.sum'): return True
+    header = content_bytes[:1024].decode('utf-8', errors='ignore').lower()
+    if "auto-generated" in header or "do not edit" in header or "generated by" in header: return True
+    return False
 
-commit_num=0
-EMPTY_TREE="4b825dc642cb6eb9a060e54bf8d69288fbee4904"
+def read_exact(pipe, size):
+    buf = bytearray()
+    while len(buf) < size:
+        chunk = pipe.read(size - len(buf))
+        if not chunk: break
+        buf.extend(chunk)
+    return bytes(buf)
 
-for ((i = 0; i < total_commits; i++)); do
-  commit_hash=${COMMITS[$i]}
-  commit_num=$((i + 1))
+range_args = []
+if FROM_COMMIT and TO_COMMIT: range_args = [f"{FROM_COMMIT}..{TO_COMMIT}"]
+elif FROM_COMMIT: range_args = [f"{FROM_COMMIT}..HEAD"]
+elif TO_COMMIT: range_args = [TO_COMMIT]
+else: range_args = ["HEAD"]
 
-  if ((commit_num % 50 == 0)) || ((commit_num == total_commits)); then
-    echo "Processed $commit_num / $total_commits commits..."
-  fi
-
-  meta=$(git show -s --format="%H%n%P%n%aI%n%an" "$commit_hash")
-  {
-    read -r hash
-    read -r parents
-    read -r date
-    read -r author
-  } <<<"$meta"
-  xml_author=$(xml_escape_attr "$author")
-
-  msg=$(git show -s --format="%B" "$commit_hash")
-  msg="${msg//$'\r'/}"
-  msg_first_line="${msg%%$'\n'*}"
-
-  printf '%s\t%s\n' "$commit_num" "$msg_first_line" >>"$TOC_FILE"
-
-  printf '<commit num="%s" hash="%s" author="%s" date="%s">\n' "$commit_num" "$commit_hash" "$xml_author" "$date" >>"$HISTORY_FILE"
-  safe_msg="${msg//]]>/] ]>}"
-  printf '  <message><![CDATA[%s]]></message>\n' "$safe_msg" >>"$HISTORY_FILE"
-  printf '  <parents>%s</parents>\n' "$parents" >>"$HISTORY_FILE"
-
-  main_parent=${parents%% *}
-  if [ -z "$main_parent" ]; then main_parent="$EMPTY_TREE"; fi
-
-  git diff-tree --no-commit-id -r -M -C --name-status "$main_parent" "$commit_hash" >"$TMP_DIR/status.txt"
-
-  while IFS=$'\t' read -r status f1 f2; do
-    [ -z "$status" ] && continue
-    target_file="${f2:-$f1}"
-    if is_ignored "$target_file" || is_binary "$target_file"; then continue; fi
-
-    if [ "$status" == "A" ]; then
-      if git cat-file -e "$main_parent:$f1" 2>/dev/null; then status="M"; fi
-    fi
-
-    get_file_id "$target_file" "$status" "$f1"
-    local_id="$_FILE_ID_RESULT"
-    fence=$(get_lang_fence "$f1")
-
-    xml_f1=$(xml_escape_attr "$f1")
-    xml_f2=$(xml_escape_attr "$f2")
-
-    case "$status" in
-    A)
-      printf '  <file path="%s" action="Created" id="%s">\n' "$xml_f1" "$local_id" >>"$HISTORY_FILE"
-      if is_lockfile "$f1"; then
-        printf '    <content omitted="true" reason="lockfile" />\n' >>"$HISTORY_FILE"
-      else
-        git show "$commit_hash:$f1" 2>/dev/null >"$TMP_DIR/current_file.txt"
-        line_count=$(awk 'END{print NR}' "$TMP_DIR/current_file.txt")
-        printf '    <content lang="%s" lines="%s">\n' "$fence" "$line_count" >>"$HISTORY_FILE"
-        if [ "$line_count" -gt "$MAX_FILE_LINES" ]; then
-          head -n "$MAX_FILE_LINES" "$TMP_DIR/current_file.txt" >>"$HISTORY_FILE"
-          printf '... [TRUNCATED] ...\n' >>"$HISTORY_FILE"
-        else
-          cat "$TMP_DIR/current_file.txt" >>"$HISTORY_FILE"
-        fi
-        printf '    </content>\n' >>"$HISTORY_FILE"
-      fi
-      printf '  </file>\n' >>"$HISTORY_FILE"
-      printf '%s\t%s\t%s\t%s\t%s\n' "$f1" "Created" "$commit_num" "$commit_hash" "$local_id" >>"$FILE_EVENTS"
-      ;;
-    M)
-      printf '  <file path="%s" action="Modified" id="%s">\n' "$xml_f1" "$local_id" >>"$HISTORY_FILE"
-      if is_lockfile "$f1"; then
-        printf '    <diff omitted="true" reason="lockfile" />\n' >>"$HISTORY_FILE"
-      else
-        git diff "$main_parent" "$commit_hash" -- "$f1" 2>/dev/null | grep -v -E '^(diff --git|index |--- a/|\+\+\+ b/)' >"$TMP_DIR/current_diff.txt"
-        diff_lines=$(awk 'END{print NR}' "$TMP_DIR/current_diff.txt")
-        printf '    <diff lines="%s">\n' "$diff_lines" >>"$HISTORY_FILE"
-        if [ "$diff_lines" -gt "$MAX_DIFF_LINES" ]; then
-          head -n "$MAX_DIFF_LINES" "$TMP_DIR/current_diff.txt" >>"$HISTORY_FILE"
-          printf '... [DIFF TRUNCATED] ...\n' >>"$HISTORY_FILE"
-        else
-          cat "$TMP_DIR/current_diff.txt" >>"$HISTORY_FILE"
-        fi
-        printf '    </diff>\n' >>"$HISTORY_FILE"
-      fi
-      printf '  </file>\n' >>"$HISTORY_FILE"
-      printf '%s\t%s\t%s\t%s\t%s\n' "$f1" "Modified" "$commit_num" "$commit_hash" "$local_id" >>"$FILE_EVENTS"
-      ;;
-    D)
-      printf '  <file path="%s" action="Deleted" id="%s"><deleted /></file>\n' "$xml_f1" "$local_id" >>"$HISTORY_FILE"
-      printf '%s\t%s\t%s\t%s\t%s\n' "$f1" "Deleted" "$commit_num" "$commit_hash" "$local_id" >>"$FILE_EVENTS"
-      ;;
-    R*)
-      printf '  <file path="%s" action="Renamed" id="%s"><renamed from="%s" to="%s" /></file>\n' "$xml_f1" "$local_id" "$xml_f1" "$xml_f2" >>"$HISTORY_FILE"
-      printf '%s\t%s\t%s\t%s\t%s\n' "$f1" "Renamed" "$commit_num" "$commit_hash" "$local_id" >>"$FILE_EVENTS"
-      printf '%s\t%s\t%s\t%s\t%s\n' "$f2" "Renamed_From" "$commit_num" "$commit_hash" "$local_id" >>"$FILE_EVENTS"
-      ;;
-    esac
-  done <"$TMP_DIR/status.txt"
-
-  printf '</commit>\n' >>"$HISTORY_FILE"
-done
+target_head = subprocess.run(["git", "rev-parse", range_args[-1].split("..")[-1]], capture_output=True, text=True).stdout.strip()
 
 # ==========================================
-# POST-PROCESSING: AI LORE & MAP GENERATION
+# PHASE 0: PRE-COMPUTE HOT FILES & METRICS
 # ==========================================
-lang_target_commit="${COMMITS[$((total_commits - 1))]:-HEAD}"
+log_cmd = ["git", "log", "-n", "2000", "--format=COMMIT|%an", "--name-only"] + range_args
+proc = subprocess.run(log_cmd, capture_output=True, text=True, errors='replace')
 
-out() { printf '%s\n' "$1" >>"$2"; }
+file_churn = Counter()
+commit_to_files = {}
+file_authors = {}
+current_commit = 0
+current_author = "Unknown"
 
-out "<repository_map>" "$TMP_DIR/map.xml"
+for line in proc.stdout.splitlines():
+    line = line.strip()
+    if not line: continue
+    if line.startswith("COMMIT|"):
+        current_commit += 1
+        current_author = line.split('|')[1] if len(line.split('|')) > 1 else "Unknown"
+        commit_to_files[current_commit] = set()
+    else:
+        if not is_ignored(line):
+            commit_to_files[current_commit].add(line)
+            file_churn[line] += 1
+            if line not in file_authors: file_authors[line] = Counter()
+            file_authors[line][current_author] += 1
 
-out "  <evolutionary_milestones>" "$TMP_DIR/map.xml"
-awk -F'\t' '{
-  msg = tolower($2)
-  if (msg ~ /initial/ || msg ~ /setup/ || msg ~ /refactor/ || msg ~ /feat:/ || msg ~ /architecture/ || msg ~ /mvc/ || msg ~ /auth/ || msg ~ /database/ || msg ~ /api/) {
-    print "    <milestone commit=\"" $1 "\">" $2 "</milestone>"
-  }
-}' "$TOC_FILE" >>"$TMP_DIR/map.xml"
-out "  </evolutionary_milestones>" "$TMP_DIR/map.xml"
+co_change = Counter()
+for fset in commit_to_files.values():
+    if len(fset) > 30: continue
+    for pair in itertools.combinations(sorted(list(fset)), 2):
+        co_change[pair] += 1
 
-out "  <architecture>" "$TMP_DIR/map.xml"
-out "    <![CDATA[" "$TMP_DIR/map.xml"
-git ls-tree -r --name-only "$lang_target_commit" | grep -v -E '(\.png|\.jpg|\.gif|\.pdf|\.zip|node_modules|vendor|package-lock\.json|yarn\.lock)' | sort | awk -F'/' '{p = ""; for (i=1; i<NF; i++) { p = p $i "/"; if (!(p in seen)) { indent = ""; for (j=1; j<i; j++) indent = indent "    "; print indent "+-- " $i "/"; seen[p] = 1 } } indent = ""; for (j=1; j<NF; j++) indent = indent "    "; print indent "|-- " $NF}' >>"$TMP_DIR/map.xml"
-out "    ]]>" "$TMP_DIR/map.xml"
-out "  </architecture>" "$TMP_DIR/map.xml"
+hot_files = set([f for f, _ in file_churn.most_common(15)])
+for (f1, f2), _ in co_change.most_common(15):
+    hot_files.add(f1)
+    hot_files.add(f2)
 
-out "  <file_lineage>" "$TMP_DIR/map.xml"
-sort -t$'\t' -k5,5 -k3,3n "$FILE_EVENTS" | awk -F'\t' '{id=$5; file=$1; status=$2; commit=$3; if (id != last_id) {if (last_id != "") {printf "    <file id=\"%s\" path=\"%s\" created=\"%s\" modified=\"%s\" deleted=\"%s\" />\n", last_id, last_file, created, modified, deleted;} last_id=id; last_file=file; created=""; modified=""; deleted="";} if (status == "Created") created=commit; else if (status == "Modified") modified = (modified == "" ? commit : modified "," commit); else if (status == "Deleted") deleted=commit; else if (status == "Renamed") last_file=file;} END {if (last_id != "") {printf "    <file id=\"%s\" path=\"%s\" created=\"%s\" modified=\"%s\" deleted=\"%s\" />\n", last_id, last_file, created, modified, deleted;}}' >>"$TMP_DIR/map.xml"
-out "  </file_lineage>" "$TMP_DIR/map.xml"
-
-out "</repository_map>" "$TMP_DIR/map.xml"
-
-# ==========================================
-# POST-PROCESSING: CURRENT STATE SNAPSHOT (THE UNIVERSAL REINDEXER)
-# ==========================================
-out "<current_state>" "$TMP_DIR/snapshot.xml"
-out "  <note>Full code of core source files at the latest commit. Use this as the absolute ground truth for writing new features or refactoring.</note>" "$TMP_DIR/snapshot.xml"
-
-# Universal Exclusion Regex for Directories & Lockfiles
-EXCLUDE_DIRS_AND_LOCKS='(node_modules/|vendor/|target/|build/|dist/|out/|\.next/|\.nuxt/|\.output/|\.svelte-kit/|\.astro/|\.docusaurus/|\.vuepress/|coverage/|\.nyc_output/|__pycache__/|\.mypy_cache/|\.pytest_cache/|\.ruff_cache/|\.venv/|venv/|env/|\.env/|\.tox/|\.nox/|\.eggs/|site-packages/|\.ipynb_checkpoints/|\.gradle/|\.mvn/|\.classpath/|\.settings/|\.bundle/|\.idea/|\.vscode/|\.vs/|\.eclipse/|\.DS_Store|\.Trash/|\.docker/|\.terraform/|\.direnv/|\.local/|\.config/|\.nuget/|\.cargo/|\.rustup/|\.git/|\.svn/|\.hg/|\.bzr/|\.npm/|\.yarn/|\.pnpm-store/|\.pnp|bower_components/|\.cache/|\.parcel-cache/|\.turbo/|\.vercel/|\.netlify/|package-lock\.json|yarn\.lock|pnpm-lock\.yaml|bun\.lockb|Gemfile\.lock|Cargo\.lock|poetry\.lock|Pipfile\.lock|composer\.lock|uv\.lock|pdm\.lock|lazy-lock\.json)'
-
-# Universal Exclusion Regex for Binaries, Media, and Minified Files
-EXCLUDE_BINARIES_AND_MEDIA='(\.min\.|\.map$|\.png$|\.jpg$|\.jpeg$|\.gif$|\.svg$|\.webp$|\.avif$|\.bmp$|\.ico$|\.tiff$|\.mp3$|\.mp4$|\.wav$|\.flac$|\.ogg$|\.avi$|\.mov$|\.zip$|\.tar$|\.gz$|\.bz2$|\.xz$|\.7z$|\.rar$|\.class$|\.o$|\.obj$|\.pyc$|\.pyo$|\.exe$|\.dll$|\.so$|\.dylib$|\.a$|\.lib$|\.wasm$|\.keystore$|\.p12$|\.jks$|\.sqlite$|\.db$|\.woff$|\.woff2$|\.ttf$|\.eot$|\.otf$|\.pdf$|\.doc$|\.docx$|\.xls$|\.xlsx$|\.ppt$|\.pptx$)'
-
-# Grab ALL tracked text files, aggressively filtering out known junk.
-git ls-tree -r --name-only "$lang_target_commit" |
-  grep -v -E "$EXCLUDE_DIRS_AND_LOCKS" |
-  grep -v -E "$EXCLUDE_BINARIES_AND_MEDIA" |
-  while read -r file; do
-
-    xml_file=$(xml_escape_attr "$file")
-    fence=$(get_lang_fence "$file")
-
-    git show "$lang_target_commit:$file" 2>/dev/null >"$TMP_DIR/snapshot_file.txt"
-
-    # Skip if git show failed (e.g., submodule or weird gitlink) or file is empty
-    [ ! -s "$TMP_DIR/snapshot_file.txt" ] && continue
-
-    line_count=$(awk 'END{print NR}' "$TMP_DIR/snapshot_file.txt")
-
-    out "  <file path=\"$xml_file\" lang=\"$fence\" lines=\"$line_count\">" "$TMP_DIR/snapshot.xml"
-    out "    <![CDATA[" "$TMP_DIR/snapshot.xml"
-
-    if [ "$line_count" -gt "$MAX_FILE_LINES" ]; then
-      head -n "$MAX_FILE_LINES" "$TMP_DIR/snapshot_file.txt" >>"$TMP_DIR/snapshot.xml"
-      printf '\n... [TRUNCATED FOR CONTEXT LIMIT] ...\n' >>"$TMP_DIR/snapshot.xml"
-    else
-      cat "$TMP_DIR/snapshot_file.txt" >>"$TMP_DIR/snapshot.xml"
-    fi
-
-    out "    ]]>" "$TMP_DIR/snapshot.xml"
-    out "  </file>" "$TMP_DIR/snapshot.xml"
-  done
-out "</current_state>" "$TMP_DIR/snapshot.xml"
+manifest_query = subprocess.run(["git", "ls-tree", "-r", "-z", target_head], capture_output=True)
+all_files = []
+identity_files = []
+if manifest_query.returncode == 0:
+    for record in manifest_query.stdout.split(b'\x00'):
+        if not record: continue
+        meta, raw_path = record.split(b'\t', 1)
+        path = raw_path.decode('utf-8', errors='replace')
+        if is_ignored(path): continue
+        _, obj_type, obj_sha = meta.split(b' ')
+        if obj_type == b'blob':
+            file_record = (path, obj_sha)
+            all_files.append(file_record)
+            if is_identity_file(path): identity_files.append(file_record)
 
 # ==========================================
-# FINAL ASSEMBLY
+# PHASE 0.5: BATCH CTAGS PRE-COMPUTATION
 # ==========================================
-printf '<?xml version="1.0" encoding="UTF-8"?>\n<git2ai_export mode="PURE_AI_LORE_AND_REINDEX" total_commits="%s" repo="%s">\n' "$total_commits" "$(basename "$(git rev-parse --show-toplevel)")" >"$OUTPUT_FILE"
-cat "$TMP_DIR/map.xml" >>"$OUTPUT_FILE"
-printf '<history>\n' >>"$OUTPUT_FILE"
-cat "$HISTORY_FILE" >>"$OUTPUT_FILE"
-printf '</history>\n' >>"$OUTPUT_FILE"
-cat "$TMP_DIR/snapshot.xml" >>"$OUTPUT_FILE"
-printf '</git2ai_export>\n' >>"$OUTPUT_FILE"
+ctags_cache = {}
+if HAS_CTAGS and all_files:
+    sys.stderr.write("Pre-computing symbols for large files via Universal Ctags...\n")
+    with tempfile.TemporaryDirectory() as td:
+        td_abs = os.path.abspath(td)
+        temp_map = {}
+        
+        pre_stream = subprocess.Popen(["git", "cat-file", "--batch"], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+        for i, (path, obj_sha) in enumerate(all_files):
+            if path in hot_files or is_identity_file(path):
+                continue
+                
+            pre_stream.stdin.write(obj_sha + b'\n')
+            pre_stream.stdin.flush()
+            header = pre_stream.stdout.readline().strip().split(b' ')
+            if len(header) < 3: continue
+            size = int(header[2])
+            raw = read_exact(pre_stream.stdout, size)
+            read_exact(pre_stream.stdout, 1)
+            
+            if size == 0 or b'\x00' in raw[:1024] or is_generated(path, raw):
+                continue
+                
+            text_for_count = raw.decode('utf-8', errors='replace')
+            if len(text_for_count.splitlines()) > MAX_FILE_LINES:
+                ext = os.path.splitext(path)[1]
+                temp_name = f"f_{i}{ext}"
+                temp_path = os.path.join(td_abs, temp_name)
+                with open(temp_path, 'wb') as f:
+                    f.write(raw)
+                temp_map[temp_path] = path
+                
+        pre_stream.stdin.close()
+        pre_stream.wait()
+        
+        if temp_map:
+            cmd = ["ctags", "--output-format=json", "--fields=+nS", "-R", td_abs]
+            proc = subprocess.run(cmd, capture_output=True)
+            if proc.returncode == 0 and proc.stdout:
+                TARGET_KINDS = {
+                    'class', 'method', 'function', 'interface', 'struct', 
+                    'enum', 'type', 'namespace', 'trait', 'impl', 'module', 
+                    'typedef', 'macro', 'property'
+                }
+                for line in proc.stdout.split(b'\n'):
+                    line = line.strip()
+                    if not line: continue
+                    try:
+                        tag = json.loads(line.decode('utf-8', errors='replace'))
+                        kind = tag.get('kind', '').lower()
+                        if kind in TARGET_KINDS:
+                            t_path = os.path.abspath(tag.get('path', ''))
+                            if t_path in temp_map:
+                                orig_path = temp_map[t_path]
+                                name = tag.get('name', '')
+                                line_num = tag.get('line', 0)
+                                sig = tag.get('signature', '')
+                                scope = tag.get('scope', '')
+                                indent = "  " if scope else ""
+                                display = f"{indent}{kind} {name}{sig}"
+                                
+                                if orig_path not in ctags_cache:
+                                    ctags_cache[orig_path] = []
+                                ctags_cache[orig_path].append((line_num, display))
+                    except Exception:
+                        continue
+                        
+        for p in ctags_cache:
+            ctags_cache[p].sort(key=lambda x: x[0])
+            ctags_cache[p] = [s[1] for s in ctags_cache[p]]
 
-echo "Export complete: $OUTPUT_FILE"
+out = open(OUTPUT_FILE, "w", encoding="utf-8", errors="replace")
+out.write('<?xml version="1.0" encoding="UTF-8"?>\n<git2ai_export>\n')
+
+object_stream = subprocess.Popen(["git", "cat-file", "--batch"], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+
+def print_file_content(path, obj_sha, skip_skeleton=False):
+    object_stream.stdin.write(obj_sha + b'\n')
+    object_stream.stdin.flush()
+    header = object_stream.stdout.readline().strip().split(b' ')
+    if len(header) < 3: return
+    size = int(header[2])
+    raw = read_exact(object_stream.stdout, size)
+    read_exact(object_stream.stdout, 1)
+    
+    if size == 0:
+        out.write(f'  <file path="{xml_escape(path)}" empty="true" />\n')
+        return
+    if is_generated(path, raw):
+        out.write(f'  <file path="{xml_escape(path)}" omitted="true" reason="auto-generated or lockfile" />\n')
+        return
+    if b'\x00' in raw[:1024]:
+        out.write(f'  <file path="{xml_escape(path)}" omitted="true" reason="binary_content" />\n')
+        return
+        
+    text = raw.decode('utf-8', errors='replace')
+    lines = text.splitlines()
+    
+    out.write(f'  <file path="{xml_escape(path)}">\n    <![CDATA[\n')
+    
+    if skip_skeleton or len(lines) <= MAX_FILE_LINES:
+        for line in lines:
+            out.write(line.replace("]]>", "] ]>") + "\n")
+    else:
+        out.write(f"/* ... [LARGE FILE: {len(lines)} LINES. EXTRACTING SEMANTIC SKELETON TO SAVE WINDOW] ... */\n\n")
+        
+        if path in ctags_cache:
+            out.write("/* Universal Ctags Extracted Outline */\n")
+            for s_line in ctags_cache[path]:
+                out.write(s_line.replace("]]>", "] ]>") + "\n")
+        else:
+            extracted = 0
+            capturing_multiline = False
+            
+            for line in lines:
+                if not capturing_multiline:
+                    if SKELETON_REGEX.search(line):
+                        out.write(line.replace("]]>", "] ]>") + "\n")
+                        extracted += 1
+                        if not ("{" in line or ";" in line or line.strip().endswith(")")):
+                            capturing_multiline = True
+                else:
+                    out.write(line.replace("]]>", "] ]>") + "\n")
+                    if "{" in line or ";" in line or line.strip().endswith(")"):
+                        capturing_multiline = False
+                        
+            if extracted == 0:
+                for idx in range(min(len(lines), 100)): out.write(lines[idx].replace("]]>", "] ]>") + "\n")
+                out.write("\n/* ... [NO INTERFACE DETECTED. TRUNCATED.] ... */\n")
+            
+    out.write("    ]]>\n  </file>\n")
+
+# ==========================================
+# PHASE 1: PROJECT IDENTITY
+# ==========================================
+out.write("<project_identity>\n  <note>Core orientation files, manifests, and documentation. Always prioritized.</note>\n")
+for path, obj_sha in identity_files:
+    print_file_content(path, obj_sha, skip_skeleton=True)
+out.write("</project_identity>\n")
+
+# ==========================================
+# PHASE 2: DIRECTORY STRUCTURE & TEST MAP
+# ==========================================
+out.write("<directory_structure>\n  <![CDATA[\n")
+filesystem = {}
+for path, _ in all_files:
+    cursor = filesystem
+    for node in path.split('/'): cursor = cursor.setdefault(node, {})
+
+def render_tree(node, prefix=""):
+    keys = sorted(node.keys())
+    for i, key in enumerate(keys):
+        is_last = (i == len(keys) - 1)
+        out.write(f"{prefix}{'└── ' if is_last else '├── '}{key}{'/' if node[key] else ''}\n")
+        if node[key]: render_tree(node[key], prefix + ("    " if is_last else "│   "))
+render_tree(filesystem)
+out.write("  ]]>\n</directory_structure>\n")
+
+out.write("<test_mappings>\n")
+all_path_strs = set([p[0] for p in all_files])
+for p in all_path_strs:
+    dir_part = os.path.dirname(p)
+    base = os.path.basename(p)
+    name, _, ext = base.rpartition('.')
+    if not ext or 'test' in name or 'spec' in name: continue
+    
+    candidates = [
+        os.path.join(dir_part, f"{name}.test.{ext}"),
+        os.path.join(dir_part, f"{name}.spec.{ext}"),
+        os.path.join(dir_part, f"test_{base}"),
+        os.path.join(dir_part, "tests", f"test_{base}"),
+        os.path.join(dir_part, "tests", f"{name}.test.{ext}"),
+        os.path.join(dir_part, "__tests__", f"{name}.test.{ext}")
+    ]
+    for c in candidates:
+        c_clean = c.replace('\\', '/')
+        if c_clean in all_path_strs:
+            out.write(f'  <mapping source="{xml_escape(p)}" test="{xml_escape(c_clean)}" />\n')
+            break
+out.write("</test_mappings>\n")
+
+# ==========================================
+# PHASE 3 & 4: CURRENT STATE & SKELETONS
+# ==========================================
+out.write("<current_state>\n  <note>Files under line threshold are full. Truly massive files are reduced to Skeletons.</note>\n")
+identity_paths = set(p[0] for p in identity_files)
+for path, obj_sha in all_files:
+    if path in identity_paths: continue
+    skip_skeleton = (path in hot_files)
+    print_file_content(path, obj_sha, skip_skeleton)
+out.write("</current_state>\n")
+object_stream.stdin.close()
+object_stream.wait()
+
+# ==========================================
+# PHASE 4.5: UNCOMMITTED CHANGES
+# ==========================================
+dirty_check = subprocess.run(["git", "diff", "HEAD"], capture_output=True, text=True, errors='replace')
+if dirty_check.stdout.strip():
+    out.write("<uncommitted_changes>\n  <note>Working tree changes not yet committed.</note>\n  <![CDATA[\n")
+    dirty_lines = dirty_check.stdout.splitlines()
+    for idx in range(min(len(dirty_lines), 500)):
+        out.write(dirty_lines[idx].replace("]]>", "] ]>") + "\n")
+    if len(dirty_lines) > 500:
+        out.write("\n... [UNCOMMITTED CHANGES TRUNCATED AFTER 500 LINES] ...\n")
+    out.write("  ]]>\n</uncommitted_changes>\n")
+
+# ==========================================
+# PHASE 5: RECENT ACTIVITY WINDOW
+# ==========================================
+out.write("<recent_activity>\n  <note>The last 20 commits for immediate active context.</note>\n  <![CDATA[\n")
+recent_proc = subprocess.Popen(["git", "log", "-n", "20", "-p", "--date=short"], stdout=subprocess.PIPE, text=True, errors='replace')
+commit_lines = 0
+for line in recent_proc.stdout:
+    if line.startswith("commit "): commit_lines = 0
+    if commit_lines < 1000:
+        out.write(line.replace("]]>", "] ]>"))
+        commit_lines += 1
+    elif commit_lines == 1000:
+        out.write("\n... [DIFF TRUNCATED TO 1000 LINES] ...\n")
+        commit_lines += 1
+out.write("  ]]>\n</recent_activity>\n")
+
+# ==========================================
+# PHASE 6: RANGE-FILTERED HISTORY
+# ==========================================
+out.write("<history>\n  <note>Filtered repository history. Capped at 500 commits.</note>\n  <![CDATA[\n")
+is_head_range = (range_args == ["HEAD"] or range_args[-1].endswith("..HEAD"))
+hist_cmd = ["git", "log", "-n", "500", "-p", "--diff-filter=ACDMRT", "--date=short"]
+if is_head_range: hist_cmd.extend(["--skip", "20"])
+hist_cmd.extend(range_args)
+
+hist_proc = subprocess.Popen(hist_cmd, stdout=subprocess.PIPE, text=True, errors='replace')
+commit_lines = 0
+for line in hist_proc.stdout:
+    if line.startswith("commit "): commit_lines = 0
+    if commit_lines < 1000:
+        out.write(line.replace("]]>", "] ]>"))
+        commit_lines += 1
+    elif commit_lines == 1000:
+        out.write("\n... [DIFF TRUNCATED TO 1000 LINES] ...\n")
+        commit_lines += 1
+out.write("  ]]>\n</history>\n")
+
+# ==========================================
+# PHASE 7: COMPACT DERIVED SIGNALS
+# ==========================================
+out.write("<development_dynamics>\n")
+out.write("  <change_frequency_hotspots>\n")
+for path, count in file_churn.most_common(15):
+    if count > 1: out.write(f'    <file path="{xml_escape(path)}" modifications="{count}" />\n')
+out.write("  </change_frequency_hotspots>\n")
+out.write("  <logical_coupling>\n")
+for (p1, p2), count in co_change.most_common(15):
+    if count > 1: out.write(f'    <coupled_pair file_a="{xml_escape(p1)}" file_b="{xml_escape(p2)}" co_commits="{count}" />\n')
+out.write("  </logical_coupling>\n")
+out.write("  <contested_ownership>\n")
+contested = []
+for path, authors in file_authors.items():
+    if len(authors) > 1: contested.append((path, len(authors), authors.most_common(1)[0][0]))
+contested.sort(key=lambda x: x[1], reverse=True)
+for path, count, primary in contested[:10]:
+    out.write(f'    <file path="{xml_escape(path)}" total_contributors="{count}" primary_author="{xml_escape(primary)}" />\n')
+out.write("  </contested_ownership>\n")
+out.write("</development_dynamics>\n")
+out.write("</git2ai_export>\n")
+out.close()
+
+export_weight_mb = os.path.getsize(OUTPUT_FILE) / (1024 * 1024)
+sys.stderr.write(f"\nContext Output: {OUTPUT_FILE} ({export_weight_mb:.1f} MB)\n")
+EOF
