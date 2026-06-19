@@ -1,6 +1,3 @@
-local helpers = require("utils.helpers")
-local get_python = helpers.get_python
-
 return {
   {
     "nvim-neotest/neotest",
@@ -71,37 +68,7 @@ return {
       },
     },
     config = function()
-      local neotest = require("neotest")
-      local adapters = {}
-      local np = require("neotest-python")
-      adapters[#adapters + 1] = np({
-        dap = { justMyCode = false },
-        runner = "pytest",
-        python = get_python(),
-      })
-      local nj = require("neotest-jest")
-      adapters[#adapters + 1] = nj({ jestCommand = "npx jest" })
-      local ngo = require("neotest-go")
-      adapters[#adapters + 1] = ngo({
-        experimental = {
-          test_table = true,
-        },
-      })
-      neotest.setup({
-        adapters = adapters,
-        status = { virtual_text = true },
-        output = { open_on_run = true },
-        quickfix = {
-          open = function()
-            local ok_trouble = pcall(require, "trouble")
-            if ok_trouble then
-              require("trouble").open({ mode = "quickfix" })
-            else
-              vim.cmd("copen")
-            end
-          end,
-        },
-      })
+      require("config.neotest").setup()
     end,
   },
 }

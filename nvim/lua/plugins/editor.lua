@@ -103,7 +103,7 @@ return {
   {
     "mfussenegger/nvim-lint",
     event = { "BufReadPre", "BufNewFile" },
-    dependencies = { "williamboman/mason.nvim" },
+    dependencies = { "mason-org/mason.nvim" },
     config = function()
       local lint = require("lint")
       lint.linters_by_ft = LINTERS_BY_FT

@@ -68,6 +68,7 @@ return {
 		},
 	},
 
+	-- Noice owns command-line and LSP message UI; Snacks owns notifications.
 	{
 		"folke/noice.nvim",
 		event = "VeryLazy",
@@ -82,6 +83,9 @@ return {
 						["vim.lsp.util.convert_input_to_markdown_lines"] = true,
 						["cmp.entry.get_documentation"] = true,
 					},
+				},
+				notify = {
+					enabled = false,
 				},
 				presets = {
 					bottom_search = true,
@@ -99,7 +103,7 @@ return {
 			})
 		end,
 		keys = {
-			{ "<leader>fn", function() Snacks.notifier.show_history() end, desc = "Notifications" },
+			{ "<leader>fn", function() require("snacks").notifier.show_history() end, desc = "Notifications" },
 			{
 				"<leader>nd",
 				function()
@@ -110,14 +114,15 @@ return {
 		},
 	},
 
+	-- Snacks provides notifications, picker extras, dashboard, lazygit, and editor niceties.
 	{
 		"folke/snacks.nvim",
 		priority = 1000,
 		lazy = false,
 		keys = {
-			{ "<leader>gg", function() Snacks.lazygit() end, desc = "Lazygit" },
-			{ "<leader>zz", function() Snacks.zen() end, desc = "Zen mode" },
-			{ "<leader>fp", function() Snacks.picker.projects() end, desc = "Projects" },
+			{ "<leader>gg", function() require("snacks").lazygit() end, desc = "Lazygit" },
+			{ "<leader>zz", function() require("snacks").zen() end, desc = "Zen mode" },
+			{ "<leader>fp", function() require("snacks").picker.projects() end, desc = "Projects" },
 		},
 		opts = {
 			bigfile = { enabled = true },
@@ -166,7 +171,7 @@ return {
 						{ icon = " ", key = "f", desc = "Find file", action = ":Telescope find_files" },
 						{ icon = " ", key = "r", desc = "Recent files", action = ":Telescope oldfiles" },
 						{ icon = " ", key = "g", desc = "Grep text", action = ":Telescope live_grep" },
-						{ icon = " ", key = "p", desc = "Projects", action = function() Snacks.picker.projects() end },
+						{ icon = " ", key = "p", desc = "Projects", action = function() require("snacks").picker.projects() end },
 						{ icon = " ", key = "s", desc = "Restore session", action = function() require("persistence").load() end },
 						{ icon = " ", key = "c", desc = "Config", action = ":e $MYVIMRC" },
 						{ icon = " ", key = "l", desc = "Lazy", action = ":Lazy" },

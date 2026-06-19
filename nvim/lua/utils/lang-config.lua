@@ -84,6 +84,7 @@ local LANG_CONFIG = {
 	cpp = {
 		lsp = "clangd",
 		lsp_opts = {
+			root_markers = { ".clangd", ".clang-tidy", ".clang-format", "compile_commands.json", ".git" },
 			cmd = {
 				"clangd",
 				"--completion-style=detailed",
@@ -139,23 +140,7 @@ local LANG_CONFIG = {
 	python = {
 		lsp = "basedpyright",
 		linters = { "ruff" },
-		lsp_opts = {
-			settings = {
-				python = {
-					analysis = {
-						typeCheckingMode = "basic",
-						autoImportCompletions = true,
-						autoSearchPaths = true,
-						useLibraryCodeForTypes = true,
-						diagnosticSeverityOverrides = {
-							reportUnusedImport = "information",
-							reportUnusedVariable = "information",
-							reportMissingTypeStubs = "none",
-						},
-					},
-				},
-			},
-		},
+
 		formatters = { "ruff_organize_imports", "ruff_format" },
 		dap_adapter = { mason = "debugpy", type = "debugpy" },
 		treesitter = { "python" },
@@ -234,6 +219,7 @@ local LANG_CONFIG = {
 		linters = { "eslint_d" },
 		lsp_opts = {
 			filetypes = { "javascript", "javascriptreact", "typescript", "typescriptreact" },
+			root_markers = { "package.json", "tsconfig.json", "jsconfig.json", ".git" },
 			settings = {
 				typescript = {
 					preferences = {
@@ -335,6 +321,7 @@ local LANG_CONFIG = {
 		lsp = "html",
 		lsp_opts = {
 			filetypes = { "html", "ejs" },
+			root_markers = { ".git" },
 			settings = {
 				html = {
 					format = { enable = false },
@@ -354,6 +341,7 @@ local LANG_CONFIG = {
 	css = {
 		lsp = "cssls",
 		lsp_opts = {
+			root_markers = { ".git" },
 			settings = {
 				css = {
 					validate = true,
@@ -386,6 +374,7 @@ local LANG_CONFIG = {
 	json = {
 		lsp = "jsonls",
 		lsp_opts = {
+			root_markers = { ".git" },
 			settings = function()
 				local ok_ss, schemastore = pcall(require, "schemastore")
 				if not ok_ss then
@@ -469,6 +458,7 @@ local LANG_CONFIG = {
 	go = {
 		lsp = "gopls",
 		lsp_opts = {
+			root_markers = { "go.mod", ".git" },
 			settings = {
 				gopls = {
 					analyses = {
@@ -554,9 +544,14 @@ local LANG_CONFIG = {
 		indent = { tabstop = 2, shiftwidth = 2 },
 	},
 
+	http = {
+		treesitter = { "http" },
+	},
+
 	sql = {
 		lsp = "sqlls",
 		lsp_opts = {
+			root_markers = { ".git" },
 			settings = {
 				sqls = { connections = {} },
 			},
@@ -569,6 +564,7 @@ local LANG_CONFIG = {
 	yaml = {
 		lsp = "yamlls",
 		lsp_opts = {
+			root_markers = { ".git" },
 			settings = {
 				yaml = {
 					format = { enable = false },
@@ -637,7 +633,6 @@ LANG_CONFIG.typescriptreact._alias_of = "typescript"
 local SKIP_MASON_FORMATTERS = {
 	prettierd_html = true,
 	gofmt = true,
-	sqlfluff = true,
 }
 
 local FORMATTER_TO_MASON = {

@@ -135,7 +135,15 @@ local PROJECT_MARKERS = {
 local function find_project_root(markers, start_path)
   markers = markers or PROJECT_MARKERS
   start_path = start_path or vim.fn.expand("%:p:h")
-  
+  if not start_path or start_path == "" then
+    start_path = vim.fn.getcwd()
+  end
+
+  local stat = vim.uv.fs_stat(start_path)
+  if stat and stat.type == "file" then
+    start_path = vim.fs.dirname(start_path) or vim.fn.getcwd()
+  end
+
   local found = vim.fs.find(markers, {
     upward = true,
     path = start_path,
@@ -145,6 +153,29 @@ local function find_project_root(markers, start_path)
     return vim.fn.fnamemodify(found[1], ":h")
   end
   return vim.fn.getcwd()
+end
+
+local function current_file_dir()
+  local name = vim.api.nvim_buf_get_name(0)
+  if name ~= "" then
+    return vim.fn.fnamemodify(name, ":p:h")
+  end
+  return vim.fn.getcwd()
+end
+
+local function project_root_or_cwd(start_path, markers)
+  return find_project_root(markers, start_path or current_file_dir())
+end
+
+local function is_big_file(bufnr, max_size)
+  bufnr = bufnr or 0
+  max_size = max_size or (1024 * 1024)
+  local name = vim.api.nvim_buf_get_name(bufnr)
+  if name == "" then
+    return false
+  end
+  local stat = vim.uv.fs_stat(name)
+  return stat ~= nil and stat.type == "file" and stat.size > max_size
 end
 
 -- ══════════════════════════════════════════════════════════════
@@ -167,10 +198,10 @@ local resolve_ts_cmd = cached(
     if has_cmd("ts-node") then
       return "ts-node"
     end
-    
+
     local current_file_dir = vim.fn.expand("%:p:h")
     local root = find_project_root({ "package.json", "tsconfig.json" }, current_file_dir)
-    
+
     local tsx_path, tsnode_path
     if CURRENT_OS == "win" then
       tsx_path = root .. "\\node_modules\\.bin\\tsx.cmd"
@@ -397,6 +428,9 @@ M.get_python = get_python
 M.safe_hash = safe_hash
 M.PROJECT_MARKERS = PROJECT_MARKERS
 M.find_project_root = find_project_root
+M.current_file_dir = current_file_dir
+M.project_root_or_cwd = project_root_or_cwd
+M.is_big_file = is_big_file
 M.resolve_ts_cmd = resolve_ts_cmd
 M.java_info = java_info
 M.make_temp_out = make_temp_out

@@ -2,6 +2,8 @@ vim.g.loaded_netrw = 1
 vim.g.loaded_netrwPlugin = 1
 vim.g.loaded_perl_provider = 0
 vim.g.loaded_ruby_provider = 0
+vim.g.loaded_node_provider = 0
+vim.g.python3_host_prog = vim.fn.expand("~/.local/share/nvim/python3/bin/python")
 
 require("config.options")
 
@@ -11,6 +13,7 @@ if not vim.uv.fs_stat(lazypath) then
     "git",
     "clone",
     "--filter=blob:none",
+    "--branch=stable",
     "https://github.com/folke/lazy.nvim.git",
     lazypath,
   })

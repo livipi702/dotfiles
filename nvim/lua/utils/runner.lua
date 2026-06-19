@@ -1,6 +1,7 @@
 
 local helpers = require("utils.helpers")
 local append_input_redirect = helpers.append_input_redirect
+local project_root_or_cwd = helpers.project_root_or_cwd
 local CURRENT_OS = helpers.CURRENT_OS
 
 local lang = require("utils.lang-config")
@@ -14,7 +15,7 @@ local M = {}
 -- ═══════════════════════════════════════════════════════════════
 -- JOB MANAGER
 -- ═══════════════════════════════════════════════════════════════
-local job_manager = { 
+local job_manager = {
   active = nil,
   job_counter = 0,
   pids = {},
@@ -34,13 +35,13 @@ end
 function job_manager:cancel()
   if self.active then
     local job_data = self.active
-    
+
     job_data.cancelled = true
     self.active = nil
-    
+
     if job_data.id and job_data.id > 0 then
       pcall(vim.fn.jobstop, job_data.id)
-      
+
       vim.defer_fn(function()
         local pid = job_data.pid
         pcall(function()
@@ -54,7 +55,7 @@ function job_manager:cancel()
         end
       end, 500)
     end
-    
+
     vim.notify("Job cancelled", vim.log.levels.INFO)
   end
 end
@@ -73,9 +74,9 @@ function job_manager:compile(cmd, cwd, on_success, timeout_ms)
     vim.notify("Same build already in progress", vim.log.levels.INFO)
     return
   end
-  
+
   self:cancel()
-  
+
   self.job_counter = self.job_counter + 1
   local job_data = {
     id = nil,
@@ -84,11 +85,18 @@ function job_manager:compile(cmd, cwd, on_success, timeout_ms)
     cmd = cmd,
     start_time = vim.uv.now(),
   }
-  
+
   local output = {}
   local job_cmd
-  if CURRENT_OS == "win" and (vim.o.shell:match("powershell") or vim.o.shell:match("pwsh") or vim.o.shell:match("cmd")) then
-    job_cmd = { vim.o.shell, "/c", cmd }
+  if CURRENT_OS == "win" then
+    local shell = vim.o.shell:lower()
+    if shell:match("powershell") or shell:match("pwsh") then
+      job_cmd = { vim.o.shell, "-NoLogo", "-NoProfile", "-Command", cmd }
+    elseif shell:match("cmd") then
+      job_cmd = { vim.o.shell, "/c", cmd }
+    else
+      job_cmd = { vim.o.shell, vim.o.shellcmdflag, cmd }
+    end
   else
     job_cmd = { vim.o.shell, vim.o.shellcmdflag, cmd }
   end
@@ -118,16 +126,16 @@ function job_manager:compile(cmd, cwd, on_success, timeout_ms)
     on_exit = function(exit_id, code)
       vim.schedule(function()
         self.pids[job_data.counter] = nil
-        
+
         if not self.active or self.active.counter ~= job_data.counter then
           return
         end
-        
+
         if job_data.cancelled then
           self.active = nil
           return
         end
-        
+
         self.active = nil
         if code ~= 0 then
           vim.fn.setqflist({}, " ", { title = "Build", lines = output })
@@ -152,7 +160,7 @@ function job_manager:compile(cmd, cwd, on_success, timeout_ms)
 
   job_data.id = job_id
   self.active = job_data
-  
+
   pcall(function()
     local pid = vim.fn.jobpid(job_id)
     if pid and pid > 0 then
@@ -186,14 +194,18 @@ vim.api.nvim_create_autocmd("VimLeavePre", {
 -- ═══════════════════════════════════════════════════════════════
 local _project_terminals = {}
 
-local function get_project_terminal()
-  local cwd = vim.fn.getcwd()
-  local term = _project_terminals[cwd]
+local function get_terminal_key(dir)
+  return project_root_or_cwd(dir or vim.fn.expand("%:p:h"))
+end
+
+local function get_project_terminal(dir)
+  local key = get_terminal_key(dir)
+  local term = _project_terminals[key]
   if term and term.bufnr and vim.api.nvim_buf_is_valid(term.bufnr) then
-    return term
+    return term, key
   end
-  _project_terminals[cwd] = nil
-  return nil
+  _project_terminals[key] = nil
+  return nil, key
 end
 
 -- ═══════════════════════════════════════════════════════════════
@@ -205,8 +217,8 @@ local function term_exec(cmd, dir)
     return
   end
 
-  local term_dir = dir or vim.fn.getcwd()
-  local cwd = vim.fn.getcwd()
+  local term_dir = dir or get_terminal_key()
+  local term_key = get_terminal_key(term_dir)
   local ok_tt, _ = pcall(require, "toggleterm")
   if not ok_tt then
     vim.cmd("botright split | lcd " .. vim.fn.fnameescape(term_dir) .. " | terminal " .. vim.fn.shellescape(cmd))
@@ -215,7 +227,7 @@ local function term_exec(cmd, dir)
   end
 
   local Terminal = require("toggleterm.terminal").Terminal
-  local runner_term_instance = get_project_terminal()
+  local runner_term_instance = get_project_terminal(term_dir)
 
   local is_valid = runner_term_instance ~= nil
     and runner_term_instance.bufnr ~= nil
@@ -224,7 +236,7 @@ local function term_exec(cmd, dir)
 
   if not is_valid then
     runner_term_instance = nil
-    _project_terminals[cwd] = nil
+    _project_terminals[term_key] = nil
   end
 
   local full_cmd = cmd
@@ -235,7 +247,7 @@ local function term_exec(cmd, dir)
   if not runner_term_instance then
     local pending_cmd = full_cmd
     local cmd_sent = false
-    
+
     runner_term_instance = Terminal:new({
       direction = "horizontal",
       dir = term_dir,
@@ -259,7 +271,7 @@ local function term_exec(cmd, dir)
         end
       end,
     })
-    _project_terminals[cwd] = runner_term_instance
+    _project_terminals[term_key] = runner_term_instance
     runner_term_instance:open()
   else
     runner_term_instance:send(full_cmd, false)
@@ -267,11 +279,12 @@ local function term_exec(cmd, dir)
 end
 
 vim.keymap.set("n", "<leader>tt", function()
-  local term = get_project_terminal()
+  local root = get_terminal_key()
+  local term = get_project_terminal(root)
   if term and term:is_open() then
     term:close()
   else
-    term_exec('echo "Project terminal (' .. vim.fn.getcwd() .. ')"')
+    term_exec('echo "Project terminal (' .. root .. ')"', root)
   end
 end, { silent = true, desc = "Toggle project terminal" })
 

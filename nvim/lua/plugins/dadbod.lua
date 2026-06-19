@@ -6,6 +6,7 @@ return {
       {
         "kristijanhusak/vim-dadbod-completion",
         ft = { "sql", "mysql", "plsql" },
+        dependencies = { "hrsh7th/nvim-cmp" },
         config = function()
           local cmp = require("cmp")
           cmp.setup.filetype({ "sql", "mysql", "plsql" }, {

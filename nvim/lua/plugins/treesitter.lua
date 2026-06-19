@@ -20,9 +20,16 @@ return {
 
       vim.schedule(function()
         local installed = ts.get_installed()
+        local missing = {}
         for _, lang in ipairs(TREESITTER_LANGS) do
           if not vim.list_contains(installed, lang) then
-            ts.install(lang)
+            missing[#missing + 1] = lang
+          end
+        end
+        if #missing > 0 then
+          local ok, err = pcall(ts.install, missing)
+          if not ok then
+            vim.notify("Failed to install treesitter parsers: " .. tostring(err), vim.log.levels.WARN)
           end
         end
       end)
@@ -131,13 +138,17 @@ return {
 
   {
     "windwp/nvim-ts-autotag",
-    event = "InsertEnter",
+    event = { "BufReadPre", "BufNewFile" },
     dependencies = { "nvim-treesitter/nvim-treesitter" },
     opts = {
       opts = {
         enable_close = true,
         enable_rename = true,
         enable_close_on_slash = true,
+      },
+      aliases = {
+        ejs = "html",
+        embedded_template = "html",
       },
     },
   },

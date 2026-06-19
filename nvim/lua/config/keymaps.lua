@@ -11,54 +11,7 @@ vim.keymap.set("n", "<leader>n", "<cmd>nohlsearch<CR>", { silent = true, desc = 
 vim.keymap.set({ "n", "v" }, "<leader>y", '"+y', { silent = true, desc = "Yank to clipboard" })
 vim.keymap.set({ "n", "v" }, "<leader>p", '"+p', { silent = true, desc = "Paste from clipboard" })
 
--- ═══════════════════════════════════════════════════════════════
--- TELESCOPE
--- ═══════════════════════════════════════════════════════════════
-vim.keymap.set("n", "<leader>ff", "<cmd>Telescope find_files<cr>", { silent = true, desc = "Files" })
 
-vim.keymap.set("n", "<leader>fg", "<cmd>Telescope live_grep<cr>", { silent = true, desc = "Grep" })
-
-vim.keymap.set("n", "<leader>fb", "<cmd>Telescope buffers<cr>", { silent = true, desc = "Buffers" })
-
-vim.keymap.set("n", "<leader>fr", "<cmd>Telescope oldfiles<cr>", { silent = true, desc = "Recent" })
-
-vim.keymap.set("n", "<leader>fh", "<cmd>Telescope help_tags<cr>", { silent = true, desc = "Help" })
-
-vim.keymap.set("n", "<leader>fd", function()
-  local ok, telescope = pcall(require, "telescope.builtin")
-  if not ok then
-    vim.notify("Telescope not available", vim.log.levels.WARN)
-    return
-  end
-  telescope.find_files({
-    cwd = vim.fn.expand("%:p:h"),
-    prompt_title = "Files (current dir)",
-  })
-end, { silent = true, desc = "Files (current dir)" })
-
-vim.keymap.set("n", "<leader>fs", function()
-  local ok, telescope = pcall(require, "telescope.builtin")
-  if not ok then
-    vim.notify("Telescope not available", vim.log.levels.WARN)
-    return
-  end
-  telescope.live_grep({
-    cwd = vim.fn.expand("%:p:h"),
-    prompt_title = "Grep (current dir)",
-  })
-end, { silent = true, desc = "Grep (current dir)" })
-
-vim.keymap.set("n", "<leader>fD", function()
-  local ok, telescope = pcall(require, "telescope.builtin")
-  if not ok then
-    vim.notify("Telescope not available", vim.log.levels.WARN)
-    return
-  end
-  local dir = vim.fn.input("Dir: ", vim.fn.getcwd() .. "/", "dir")
-  if dir ~= "" then
-    telescope.find_files({ cwd = dir })
-  end
-end, { silent = true, desc = "Files (pick dir)" })
 
 vim.keymap.set("n", "<S-l>", "<cmd>BufferLineCycleNext<CR>", { silent = true, desc = "Next buffer" })
 vim.keymap.set("n", "<S-h>", "<cmd>BufferLineCyclePrev<CR>", { silent = true, desc = "Prev buffer" })
@@ -102,7 +55,7 @@ vim.api.nvim_create_autocmd("LspAttach", {
       ok, result = pcall(client.supports_method, client, method)
       return ok and result
     end
-    
+
     if supports("textDocument/inlayHint") then
       vim.lsp.inlay_hint.enable(false, { bufnr = args.buf })
     end
@@ -142,11 +95,7 @@ vim.api.nvim_create_autocmd("LspAttach", {
       map("gD", vim.lsp.buf.declaration, "Go to declaration")
     end
 
-    if supports("textDocument/typeDefinition") then
-      map("<leader>lt", vim.lsp.buf.type_definition, "Type definition")
-    end
-
-    -- gri (implementation) and grr (references) are now set by Neovim 0.12 automatically
+    -- grt (type definition), gri (implementation), and grr (references) are set by Neovim 0.12 automatically
 
     if supports("textDocument/definition") then
       map("gd", vim.lsp.buf.definition, "Go to definition")
@@ -161,8 +110,8 @@ vim.api.nvim_create_autocmd("LspAttach", {
     end
 
     map("<leader>ld", vim.diagnostic.open_float, "Line diagnostics")
-    map("<leader>li", "<cmd>LspInfo<CR>", "LSP info")
-    
+    map("<leader>li", "<cmd>checkhealth vim.lsp<CR>", "LSP health")
+
     if supports("textDocument/inlayHint") then
       map("<leader>lH", function()
         local enabled = vim.lsp.inlay_hint.is_enabled({ bufnr = 0 })
@@ -172,7 +121,6 @@ vim.api.nvim_create_autocmd("LspAttach", {
     end
 
     if supports("textDocument/codeLens") then
-      map("<leader>lC", vim.lsp.codelens.run, "Run codelens")
       pcall(vim.lsp.codelens.enable, true, { bufnr = args.buf })
     end
   end,
@@ -189,17 +137,7 @@ vim.api.nvim_create_autocmd("LspDetach", {
   end,
 })
 
-vim.keymap.set("n", "[d", function()
-  vim.diagnostic.jump({ count = -1, on_jump = function(_, bufnr)
-    vim.diagnostic.open_float({ bufnr = bufnr, focus = false })
-  end })
-end, { silent = true, desc = "Prev diagnostic" })
 
-vim.keymap.set("n", "]d", function()
-  vim.diagnostic.jump({ count = 1, on_jump = function(_, bufnr)
-    vim.diagnostic.open_float({ bufnr = bufnr, focus = false })
-  end })
-end, { silent = true, desc = "Next diagnostic" })
 
 vim.keymap.set("n", "[q", "<cmd>cprev<CR>", { silent = true, desc = "Prev quickfix" })
 vim.keymap.set("n", "]q", "<cmd>cnext<CR>", { silent = true, desc = "Next quickfix" })
@@ -326,17 +264,12 @@ vim.keymap.set("v", "g<C-a>", "<Plug>(dial-increment-additional)", { silent = tr
 vim.keymap.set("v", "g<C-x>", "<Plug>(dial-decrement-additional)", { silent = true, desc = "Decrement alt" })
 
 vim.keymap.set("n", "<leader>a", "ggVG", { silent = true, desc = "Select all" })
-vim.keymap.set("n", "+", "<Plug>(dial-increment)", { silent = true, desc = "Increment" })
-vim.keymap.set("n", "-", "<Plug>(dial-decrement)", { silent = true, desc = "Decrement" })
-vim.keymap.set("v", "+", "<Plug>(dial-increment)", { silent = true, desc = "Increment" })
-vim.keymap.set("v", "-", "<Plug>(dial-decrement)", { silent = true, desc = "Decrement" })
-vim.keymap.set("v", "g+", "<Plug>(dial-increment-additional)", { silent = true, desc = "Increment sequential" })
-vim.keymap.set("v", "g-", "<Plug>(dial-decrement-additional)", { silent = true, desc = "Decrement sequential" })
 
 vim.keymap.set("t", "<Esc><Esc>", [[<C-\><C-n>]], { silent = true, desc = "Exit terminal mode" })
 
 vim.keymap.set("n", "<leader>pn", function()
-  local project_name = vim.fn.fnamemodify(vim.fn.getcwd(), ":t")
+  local root = require("utils.helpers").project_root_or_cwd()
+  local project_name = vim.fn.fnamemodify(root, ":t")
   local notes_dir = vim.fn.stdpath("data") .. "/project_notes"
   vim.fn.mkdir(notes_dir, "p")
   vim.cmd("edit " .. vim.fn.fnameescape(notes_dir .. "/" .. project_name .. ".md"))

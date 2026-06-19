@@ -1,6 +1,8 @@
 local lang = require("utils.lang-config")
 local get_lang_cfg = lang.get_lang_cfg
-local cache_invalidate = require("utils.helpers").cache_invalidate
+local helpers = require("utils.helpers")
+local cache_invalidate = helpers.cache_invalidate
+local is_big_file = helpers.is_big_file
 
 -- ╔══════════════════════════════════════════════════════════════╗
 -- ║                     AUTOCOMMANDS                             ║
@@ -10,7 +12,7 @@ vim.api.nvim_create_autocmd("TextYankPost", {
 	group = vim.api.nvim_create_augroup("my_yank_highlight", { clear = true }),
 	desc = "Briefly highlight yanked text",
 	callback = function()
-		vim.hl.on_yank({ timeout = 200 })
+		vim.hl.hl_op({ timeout = 200 })
 	end,
 })
 
@@ -35,6 +37,10 @@ vim.api.nvim_create_autocmd("FileType", {
 			if cfg.indent.expandtab ~= nil then
 				vim.opt_local.expandtab = cfg.indent.expandtab
 			end
+		end
+
+		if vim.bo[event.buf].buftype ~= "" or is_big_file(event.buf) then
+			return
 		end
 
 		-- Enable treesitter highlighting when a parser exists.

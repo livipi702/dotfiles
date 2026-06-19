@@ -15,7 +15,10 @@ return {
             once = true,
             callback = function()
               vim.schedule(function()
-                vim.cmd("NvimTreeOpen " .. vim.fn.fnameescape(arg))
+                local dir = vim.fn.fnamemodify(arg, ":p")
+                vim.cmd.cd(vim.fn.fnameescape(dir))
+                vim.cmd("enew")
+                vim.cmd("NvimTreeOpen")
               end)
             end,
           })

@@ -1,6 +1,7 @@
 local helpers = require("utils.helpers")
 local get_jdtls_bundles = helpers.get_jdtls_bundles
 local is_dir = helpers.is_dir
+local safe_hash = helpers.safe_hash
 local CURRENT_OS = helpers.CURRENT_OS
 
 local M = {}
@@ -153,10 +154,10 @@ local function on_attach(_, bufnr)
 	end
 
 	local function jmap(k, fn, d)
-		vim.keymap.set("n", k, fn, { buffer = bufnr, silent = true, desc = d })
+		vim.keymap.set("n", k, fn, { buf = bufnr, silent = true, desc = d })
 	end
 	local function jvmap(k, fn, d)
-		vim.keymap.set("v", k, fn, { buffer = bufnr, silent = true, desc = d })
+		vim.keymap.set("v", k, fn, { buf = bufnr, silent = true, desc = d })
 	end
 
 	jmap("<leader>co", jdtls.organize_imports, "Organize imports")
@@ -200,9 +201,19 @@ function M.setup()
 		return
 	end
 
+	-- Root directory
+	local root_dir = require("jdtls.setup").find_root({
+		".git",
+		"mvnw",
+		"gradlew",
+		"pom.xml",
+		"build.gradle",
+		"build.gradle.kts",
+	}) or vim.fn.getcwd()
+
 	-- Workspace directory (persists index data across restarts)
-	local project_name = vim.fn.fnamemodify(vim.fn.getcwd(), ":t")
-	local workspace_dir = vim.fn.stdpath("data") .. "/jdtls-workspace/" .. project_name
+	local project_name = vim.fn.fnamemodify(root_dir, ":t")
+	local workspace_dir = vim.fn.stdpath("data") .. "/jdtls-workspace/" .. project_name .. "-" .. safe_hash(root_dir)
 	vim.fn.mkdir(workspace_dir, "p")
 
 	-- Build cmd: try wrapper first, fall back to manual java invocation
@@ -214,16 +225,6 @@ function M.setup()
 	-- Capabilities
 	local ok_cmp, cmp_lsp = pcall(require, "cmp_nvim_lsp")
 	local capabilities = ok_cmp and cmp_lsp.default_capabilities() or {}
-
-	-- Root directory
-	local root_dir = require("jdtls.setup").find_root({
-		".git",
-		"mvnw",
-		"gradlew",
-		"pom.xml",
-		"build.gradle",
-		"build.gradle.kts",
-	}) or vim.fn.getcwd()
 
 	local bundles = get_jdtls_bundles()
 

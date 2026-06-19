@@ -12,6 +12,43 @@ return {
   {
     "nvim-telescope/telescope.nvim",
     cmd = "Telescope",
+    keys = {
+      { "<leader>ff", "<cmd>Telescope find_files<CR>", desc = "Files" },
+      { "<leader>fg", "<cmd>Telescope live_grep<CR>", desc = "Grep" },
+      { "<leader>fb", "<cmd>Telescope buffers<CR>", desc = "Buffers" },
+      { "<leader>fr", "<cmd>Telescope oldfiles<CR>", desc = "Recent" },
+      { "<leader>fh", "<cmd>Telescope help_tags<CR>", desc = "Help" },
+      {
+        "<leader>fd",
+        function()
+          require("telescope.builtin").find_files({
+            cwd = vim.fn.expand("%:p:h"),
+            prompt_title = "Files (current dir)",
+          })
+        end,
+        desc = "Files (current dir)",
+      },
+      {
+        "<leader>fs",
+        function()
+          require("telescope.builtin").live_grep({
+            cwd = vim.fn.expand("%:p:h"),
+            prompt_title = "Grep (current dir)",
+          })
+        end,
+        desc = "Grep (current dir)",
+      },
+      {
+        "<leader>fD",
+        function()
+          local dir = vim.fn.input("Dir: ", vim.fn.getcwd() .. "/", "dir")
+          if dir ~= "" then
+            require("telescope.builtin").find_files({ cwd = dir })
+          end
+        end,
+        desc = "Files (pick dir)",
+      },
+    },
     dependencies = { "nvim-lua/plenary.nvim", "nvim-telescope/telescope-fzf-native.nvim" },
     config = function()
       local telescope = require("telescope")
@@ -56,7 +93,7 @@ return {
             or {},
         },
       })
-      telescope.load_extension("fzf")
+      pcall(telescope.load_extension, "fzf")
     end,
   },
 }
