@@ -1,107 +1,59 @@
-local helpers = require("utils.helpers")
-local CURRENT_OS = helpers.CURRENT_OS
-local has_cmd = helpers.has_cmd
+-- base options (2-space indent matches prettier)
+local o = vim.opt
 
--- ╔══════════════════════════════════════════════════╗
--- ║                      OPTIONS                       ║
--- ╚══════════════════════════════════════════════════╝
+o.number = true
+o.relativenumber = true
+o.cursorline = true
+o.signcolumn = "yes"
+o.termguicolors = true
 
-vim.opt.number = true
-vim.opt.relativenumber = true
-vim.opt.tabstop = 4
-vim.opt.shiftwidth = 4
-vim.opt.expandtab = true
-vim.opt.softtabstop = 4
-vim.opt.ignorecase = true
-vim.opt.smartcase = true
-vim.opt.termguicolors = true
-vim.opt.signcolumn = "yes"
-vim.opt.updatetime = 250
-vim.opt.scrolloff = 8
-vim.opt.sidescrolloff = 8
-vim.opt.wrap = false
-vim.opt.cursorline = true
-vim.opt.splitbelow = true
-vim.opt.splitright = true
-vim.opt.undofile = true
-vim.opt.swapfile = false
-vim.opt.mouse = "a"
-vim.opt.showmode = false
+o.tabstop = 2
+o.shiftwidth = 2
+o.softtabstop = 2
+o.expandtab = true
+o.smartindent = true
+o.breakindent = true
 
-vim.opt.smoothscroll = true
-vim.opt.jumpoptions = "stack"
-vim.opt.timeoutlen = 400
+o.wrap = false
+o.scrolloff = 8
+o.sidescrolloff = 8
 
-vim.opt.fillchars = {
-	eob = " ",
-}
+o.ignorecase = true
+o.smartcase = true
+o.incsearch = true
+o.hlsearch = true
 
-vim.g.mapleader = " "
-vim.g.autoformat = true
+o.splitright = true
+o.splitbelow = true
 
-vim.filetype.add({ extension = { ejs = "ejs" } })
-vim.treesitter.language.register("embedded_template", "ejs")
+o.updatetime = 200
+o.timeoutlen = 300
+o.ttimeoutlen = 10
 
--- ╔══════════════════════════════════════════════════╗
--- ║                    CLIPBOARD               ║
--- ╚══════════════════════════════════════════════════╝
+o.undofile = true
+o.swapfile = false
+o.backup = false
+o.writebackup = false
 
-if CURRENT_OS == "linux" then
-	local is_wsl = vim.fn.has("wsl") == 1
-	if is_wsl then
-		if has_cmd("win32yank.exe") then
-			vim.g.clipboard = {
-				name = "WslClipboard",
-				copy = { ["+"] = "win32yank.exe -i --crlf", ["*"] = "win32yank.exe -i --crlf" },
-				paste = { ["+"] = "win32yank.exe -o --lf", ["*"] = "win32yank.exe -o --lf" },
-				cache_enabled = 0,
-			}
-		else
-			vim.g.clipboard = {
-				name = "WslClipboard",
-				copy = { ["+"] = "clip.exe", ["*"] = "clip.exe" },
-				paste = {
-					["+"] = 'powershell.exe -NoLogo -NoProfile -c [Console]::Out.Write($(Get-Clipboard -Raw).tostring().replace("`r", ""))',
-					["*"] = 'powershell.exe -NoLogo -NoProfile -c [Console]::Out.Write($(Get-Clipboard -Raw).tostring().replace("`r", ""))',
-				},
-				cache_enabled = 0,
-			}
-		end
-	end
-elseif CURRENT_OS == "mac" then
-	vim.g.clipboard = {
-		name = "macOSClipboard",
-		copy = { ["+"] = "pbcopy", ["*"] = "pbcopy" },
-		paste = { ["+"] = "pbpaste", ["*"] = "pbpaste" },
-	}
-elseif CURRENT_OS == "win" then
-	vim.g.clipboard = {
-		name = "WindowsClipboard",
-		copy = { ["+"] = "clip.exe", ["*"] = "clip.exe" },
-		paste = {
-			["+"] = "powershell.exe -NoLogo -NoProfile -c Get-Clipboard",
-			["*"] = "powershell.exe -NoLogo -NoProfile -c Get-Clipboard",
-		},
-	}
-end
+o.mouse = "a"
+o.clipboard = "unnamedplus"
+o.completeopt = { "menuone", "noselect", "popup" }
+o.pumheight = 10
+o.showmode = false
+o.cmdheight = 1
+o.laststatus = 3
+o.confirm = true
 
-local sev = vim.diagnostic.severity
-vim.diagnostic.config({
-	virtual_text = { prefix = "●" },
-	signs = {
-		text = {
-			[sev.ERROR] = "●",
-			[sev.WARN] = "●",
-			[sev.INFO] = "●",
-			[sev.HINT] = "●",
-		},
-	},
-	underline = true,
-	update_in_insert = false,
-	float = { border = "rounded", source = true },
-	jump = {
-		on_jump = function(_, bufnr)
-			vim.diagnostic.open_float({ bufnr = bufnr, focus = false })
-		end,
-	},
-})
+o.winborder = "rounded"
+
+-- unused providers off (faster startup; re-enable if a plugin needs one)
+vim.g.loaded_node_provider = 0
+vim.g.loaded_perl_provider = 0
+vim.g.loaded_python3_provider = 0
+vim.g.loaded_ruby_provider = 0
+
+-- fold via treesitter
+o.foldmethod = "expr"
+o.foldexpr = "v:lua.vim.treesitter.foldexpr()"
+o.foldlevel = 99
+o.foldlevelstart = 99

@@ -1,59 +1,50 @@
-local lang = require("utils.lang-config")
-local LSP_SERVERS = lang.get_lsp_servers()
-local FORMATTERS = lang.get_formatters()
-local DAP_ADAPTERS = lang.get_dap_adapters()
-local get_linters = lang.get_linters
-
+-- mason chain + native vim.lsp API (nvim-lspconfig is data-only now)
 return {
-	{
-		"mason-org/mason.nvim",
-		cmd = { "Mason", "MasonInstall", "MasonUpdate" },
-		opts = {},
-	},
+  { "mason-org/mason.nvim", opts = {} },
 
-	{
-		"mason-org/mason-lspconfig.nvim",
-		dependencies = { "mason-org/mason.nvim" },
-		config = function()
-			require("mason-lspconfig").setup({
-				ensure_installed = LSP_SERVERS,
-				automatic_enable = false,
-			})
-		end,
-	},
+  {
+    "WhoIsSethDaniel/mason-tool-installer.nvim",
+    dependencies = { "mason-org/mason.nvim" },
+    opts = {
+      ensure_installed = {
+        "prettierd",
+        "stylua",
+        "eslint_d",
+        "tree-sitter-cli",
+      },
+    },
+  },
 
-	{
-		"WhoIsSethDaniel/mason-tool-installer.nvim",
-		dependencies = { "mason-org/mason.nvim" },
-		config = function()
-			local tools = {}
-			vim.list_extend(tools, FORMATTERS)
-			vim.list_extend(tools, DAP_ADAPTERS)
-			vim.list_extend(tools, get_linters())
-			vim.list_extend(tools, { "java-test" })
-			require("mason-tool-installer").setup({
-				ensure_installed = tools,
-			})
-		end,
-	},
+  {
+    "mason-org/mason-lspconfig.nvim",
+    dependencies = {
+      { "mason-org/mason.nvim", opts = {} },
+      "neovim/nvim-lspconfig",
+      "saghen/blink.cmp",
+    },
+    opts = {
+      ensure_installed = {
+        "vtsls",
+        "tailwindcss",
+        "eslint",
+        "emmet_language_server",
+        "jsonls",
+        "yamlls",
+        "lua_ls",
+        "marksman",
+        -- NOTE: swap vtsls -> tsgo/tsc later for the faster native TS server.
+      },
+      automatic_enable = true,
+    },
+    config = function(_, opts)
+      require("mason-lspconfig").setup(opts)
+      -- blink capabilities for every server
+      local ok, blink = pcall(require, "blink.cmp")
+      if ok then
+        vim.lsp.config("*", { capabilities = blink.get_lsp_capabilities() })
+      end
+    end,
+  },
 
-	{
-		"neovim/nvim-lspconfig",
-		dependencies = {
-			"mason-org/mason.nvim",
-			"mason-org/mason-lspconfig.nvim",
-			"hrsh7th/cmp-nvim-lsp",
-			"b0o/schemastore.nvim",
-		},
-		config = function()
-			local capabilities = require("cmp_nvim_lsp").default_capabilities()
-			require("config.lsp").setup(capabilities)
-		end,
-	},
-
-	{
-		"mfussenegger/nvim-jdtls",
-		ft = "java",
-		dependencies = { "mason-org/mason.nvim", "mfussenegger/nvim-dap" },
-	},
+  { "neovim/nvim-lspconfig" },
 }

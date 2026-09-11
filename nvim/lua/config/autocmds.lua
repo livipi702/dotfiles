@@ -1,125 +1,46 @@
-local lang = require("utils.lang-config")
-local get_lang_cfg = lang.get_lang_cfg
-local helpers = require("utils.helpers")
-local cache_invalidate = helpers.cache_invalidate
-local is_big_file = helpers.is_big_file
+local augroup = vim.api.nvim_create_augroup
+local autocmd = vim.api.nvim_create_autocmd
 
--- ╔══════════════════════════════════════════════════════════════╗
--- ║                     AUTOCOMMANDS                             ║
--- ╚══════════════════════════════════════════════════════════════╝
-
-vim.api.nvim_create_autocmd("TextYankPost", {
-	group = vim.api.nvim_create_augroup("my_yank_highlight", { clear = true }),
-	desc = "Briefly highlight yanked text",
-	callback = function()
-		vim.hl.hl_op({ timeout = 200 })
-	end,
+augroup("YankHighlight", { clear = true })
+autocmd("TextYankPost", {
+  group = "YankHighlight",
+  callback = function()
+    vim.highlight.on_yank({ higroup = "IncSearch", timeout = 150 })
+  end,
 })
 
-vim.api.nvim_create_autocmd("DirChanged", {
-	group = vim.api.nvim_create_augroup("my_cache_invalidate", { clear = true }),
-	desc = "Invalidate runtime caches on directory change",
-	callback = cache_invalidate,
+augroup("ResizeSplits", { clear = true })
+autocmd("VimResized", {
+  group = "ResizeSplits",
+  callback = function()
+    vim.cmd("tabdo wincmd =")
+  end,
 })
 
-vim.api.nvim_create_autocmd("FileType", {
-	group = vim.api.nvim_create_augroup("my_indent_setup", { clear = true }),
-	desc = "Apply language indent and treesitter indent",
-	callback = function(event)
-		local ft = vim.bo.filetype
-
-		-- Language-specific indent from config
-		local cfg = get_lang_cfg(ft)
-		if cfg and cfg.indent then
-			vim.opt_local.tabstop = cfg.indent.tabstop or 4
-			vim.opt_local.shiftwidth = cfg.indent.shiftwidth or 4
-			vim.opt_local.softtabstop = cfg.indent.softtabstop or cfg.indent.tabstop or 4
-			if cfg.indent.expandtab ~= nil then
-				vim.opt_local.expandtab = cfg.indent.expandtab
-			end
-		end
-
-		if vim.bo[event.buf].buftype ~= "" or is_big_file(event.buf) then
-			return
-		end
-
-		-- Enable treesitter highlighting when a parser exists.
-		local ok_get, ts_lang = pcall(vim.treesitter.language.get_lang, ft)
-		ts_lang = (ok_get and ts_lang) or ft
-		pcall(vim.treesitter.start, event.buf, ts_lang)
-	end,
+augroup("CloseWithQ", { clear = true })
+autocmd("FileType", {
+  group = "CloseWithQ",
+  pattern = { "help", "man", "qf", "lspinfo", "checkhealth" },
+  callback = function(ev)
+    vim.keymap.set("n", "q", "<cmd>close<cr>", { buffer = ev.buf, silent = true })
+  end,
 })
 
-vim.api.nvim_create_autocmd("BufWritePre", {
-	group = vim.api.nvim_create_augroup("my_strip_trailing_ws", { clear = true }),
-	desc = "Strip trailing whitespace for unformatted filetypes",
-	pattern = "*",
-	callback = function()
-		if not vim.bo.modifiable or vim.bo.buftype ~= "" or vim.bo.filetype == "" then
-			return
-		end
-		local cfg = get_lang_cfg(vim.bo.filetype)
-		if cfg and cfg.formatters and vim.g.autoformat then
-			return
-		end
-		local view = vim.fn.winsaveview()
-		pcall(vim.cmd, [[keeppatterns %s/\s\+$//e]])
-		vim.fn.winrestview(view)
-	end,
-})
-
-vim.api.nvim_create_autocmd("BufReadPost", {
-	group = vim.api.nvim_create_augroup("my_restore_cursor", { clear = true }),
-	desc = "Restore cursor to last known position",
-	callback = function()
-		if vim.tbl_contains({ "gitcommit", "gitrebase", "help" }, vim.bo.filetype) then
-			return
-		end
-		if vim.bo.buftype ~= "" then
-			return
-		end
-		local mark = vim.api.nvim_buf_get_mark(0, '"')
-		local lines = vim.api.nvim_buf_line_count(0)
-		if mark[1] > 0 and mark[1] <= lines then
-			pcall(vim.api.nvim_win_set_cursor, 0, mark)
-		end
-	end,
-})
-
-vim.api.nvim_create_autocmd("FileType", {
-	group = vim.api.nvim_create_augroup("my_close_special_bufs", { clear = true }),
-	desc = "Close special buffers with q",
-	pattern = {
-		"help",
-		"lspinfo",
-		"notify",
-		"qf",
-		"query",
-		"startuptime",
-		"checkhealth",
-		"neotest-summary",
-		"neotest-output",
-		"neotest-output-panel",
-		"dbout",
-		"httpResult",
-	},
-	callback = function(event)
-		vim.bo[event.buf].buflisted = false
-		vim.keymap.set("n", "q", "<cmd>close<CR>", { buf = event.buf, silent = true })
-	end,
-})
-
-vim.api.nvim_create_autocmd("User", {
-	group = vim.api.nvim_create_augroup("my_startup_notify", { clear = true }),
-	pattern = "VeryLazy",
-	once = true,
-	callback = function()
-		local LANG_CONFIG = require("utils.lang-config").LANG_CONFIG
-		vim.notify(
-			"Config loaded \u{2014} "
-				.. vim.tbl_count(LANG_CONFIG)
-				.. " languages  |  Linting ON by default (\u{3c}leader\u{3e}lL to toggle)",
-			vim.log.levels.INFO
-		)
-	end,
+-- buffer-local LSP maps on attach (native 0.11+ API)
+augroup("LspAttachMaps", { clear = true })
+autocmd("LspAttach", {
+  group = "LspAttachMaps",
+  callback = function(ev)
+    local map = function(keys, fn, desc)
+      vim.keymap.set("n", keys, fn, { buffer = ev.buf, desc = "LSP: " .. desc })
+    end
+    map("gd", vim.lsp.buf.definition, "Goto definition")
+    -- references/rename/code-action use native grr/grn/gra (0.11+ defaults)
+    map("gI", vim.lsp.buf.implementation, "Goto implementation")
+    map("gy", vim.lsp.buf.type_definition, "Type definition")
+    map("K", vim.lsp.buf.hover, "Hover")
+    map("<leader>ca", vim.lsp.buf.code_action, "Code action")
+    map("<leader>cr", vim.lsp.buf.rename, "Rename")
+    map("<leader>cd", vim.diagnostic.open_float, "Diagnostics")
+  end,
 })
