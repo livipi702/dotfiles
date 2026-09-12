@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
+
 # =============================================================================
 # gitid — Git Identity Switcher
 #
-# Usage: gitid <command>
+# Usage:
+#   gitid <command>
 #
 # Commands:
 #   livipi   Switch to livipi702 identity
@@ -10,27 +12,25 @@
 #   show     Print the current repo's git identity
 #   list     List all available identities
 #   help     Show this help message
-#
-# Install: place this file in a directory on your $PATH and chmod +x it.
 # =============================================================================
 
-# ── ANSI colors (disabled automatically when not a terminal) ──────────────────
+# ── ANSI colors (disabled automatically when not a terminal) ────────────────
 if [[ -t 1 ]]; then
-  RED='\033[0;31m'
-  GREEN='\033[0;32m'
-  YELLOW='\033[1;33m'
-  CYAN='\033[0;36m'
-  BOLD='\033[1m'
-  DIM='\033[2m'
-  RESET='\033[0m'
+  RED=$'\033[0;31m'
+  GREEN=$'\033[0;32m'
+  YELLOW=$'\033[1;33m'
+  CYAN=$'\033[0;36m'
+  BOLD=$'\033[1m'
+  DIM=$'\033[2m'
+  RESET=$'\033[0m'
 else
   RED='' GREEN='' YELLOW='' CYAN='' BOLD='' DIM='' RESET=''
 fi
 
-# ── Helpers ───────────────────────────────────────────────────────────────────
+# ── Helpers ──────────────────────────────────────────────────────────────────
 die() {
   printf "${RED}✗ %s${RESET}\n" "$*" >&2
-  exit 1
+  return 1
 }
 
 ok() {
@@ -45,13 +45,13 @@ hr() {
   printf "${DIM}%s${RESET}\n" "────────────────────────────────"
 }
 
-# ── Require a git repo ────────────────────────────────────────────────────────
+# ── Require a git repo ───────────────────────────────────────────────────────
 require_git_repo() {
   git rev-parse --is-inside-work-tree >/dev/null 2>&1 ||
     die "Not inside a Git repository."
 }
 
-# ── Display current identity ──────────────────────────────────────────────────
+# ── Display current identity ─────────────────────────────────────────────────
 show_identity() {
   local name email
 
@@ -64,7 +64,7 @@ show_identity() {
   hr
 }
 
-# ── Apply an identity ─────────────────────────────────────────────────────────
+# ── Apply an identity ────────────────────────────────────────────────────────
 set_identity() {
   local name="$1"
   local email="$2"
@@ -77,7 +77,7 @@ set_identity() {
   show_identity
 }
 
-# ── List all registered identities ───────────────────────────────────────────
+# ── List all registered identities ──────────────────────────────────────────
 list_identities() {
   hr
   printf "  ${CYAN}%-10s${RESET}  %s\n" \
@@ -87,7 +87,7 @@ list_identities() {
   hr
 }
 
-# ── Usage / help ──────────────────────────────────────────────────────────────
+# ── Usage / help ─────────────────────────────────────────────────────────────
 usage() {
   printf "\n${BOLD}Usage:${RESET}  gitid <command>\n\n"
 
@@ -106,25 +106,25 @@ usage() {
   printf "\n"
 }
 
-# ── Main ──────────────────────────────────────────────────────────────────────
-main() {
+# ── Public command ──────────────────────────────────────────────────────────
+gitid() {
   case "${1:-}" in
   livipi)
-    require_git_repo
+    require_git_repo || return
     set_identity \
       "livipi702" \
       "livipi7028@videobix.com" \
       "livipi702"
     ;;
   aryan)
-    require_git_repo
+    require_git_repo || return
     set_identity \
       "Aryan Shinde" \
       "aryanpshinde2006@gmail.com" \
       "Aryan Shinde"
     ;;
   show)
-    require_git_repo
+    require_git_repo || return
     show_identity
     ;;
   list)
@@ -135,19 +135,11 @@ main() {
     ;;
   "")
     usage
-    exit 1
     ;;
   *)
-    die "Unknown command: '${1}'. Run 'gitid help' for usage."
+    die "Unknown command: '$1'"
+    printf "\n"
+    usage
     ;;
   esac
 }
-
-# ── Source-safe execution guard ───────────────────────────────────────────────
-# If sourced (e.g. from .zshrc), return here — functions are defined but
-# main() does NOT run and strict mode is NOT applied to the parent shell.
-# If executed directly, fall through to set strict mode and call main().
-(return 0 2>/dev/null) && return
-
-set -euo pipefail
-main "$@"
