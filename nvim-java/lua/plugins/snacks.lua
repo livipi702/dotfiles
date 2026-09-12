@@ -22,7 +22,6 @@ return {
       { "<leader>:", function() Snacks.picker.command_history() end, desc = "Command history" },
       { "<leader>ff", function() Snacks.picker.files({ hidden = true, ignored = true, exclude = { "target", "build", "out", ".gradle", "*.class", "*.log" } }) end, desc = "Find files" },
       { "<leader>fg", function() Snacks.picker.git_files() end, desc = "Find git files" },
-      { "<leader>fb", function() Snacks.picker.buffers() end, desc = "Buffers" },
       { "<leader>fr", function() Snacks.picker.recent() end, desc = "Recent" },
       { "<leader>fc", function() Snacks.picker.files({ cwd = vim.fn.stdpath("config") }) end, desc = "Find config file" },
       { "<leader>fp", function() Snacks.picker.projects() end, desc = "Projects" },
