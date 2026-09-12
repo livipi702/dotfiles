@@ -5,7 +5,7 @@ augroup("YankHighlight", { clear = true })
 autocmd("TextYankPost", {
   group = "YankHighlight",
   callback = function()
-    vim.highlight.on_yank({ higroup = "IncSearch", timeout = 150 })
+    vim.hl.on_yank({ higroup = "IncSearch", timeout = 150 })
   end,
 })
 
@@ -22,7 +22,7 @@ autocmd("FileType", {
   group = "CloseWithQ",
   pattern = { "help", "man", "qf", "lspinfo", "checkhealth" },
   callback = function(ev)
-    vim.keymap.set("n", "q", "<cmd>close<cr>", { buffer = ev.buf, silent = true })
+    vim.keymap.set("n", "q", "<cmd>close<cr>", { buf = ev.buf, silent = true })
   end,
 })
 
@@ -32,7 +32,7 @@ autocmd("LspAttach", {
   group = "LspAttachMaps",
   callback = function(ev)
     local map = function(keys, fn, desc)
-      vim.keymap.set("n", keys, fn, { buffer = ev.buf, desc = "LSP: " .. desc })
+      vim.keymap.set("n", keys, fn, { buf = ev.buf, desc = "LSP: " .. desc })
     end
     map("gd", vim.lsp.buf.definition, "Goto definition")
     -- references/rename/code-action use native grr/grn/gra (0.11+ defaults)

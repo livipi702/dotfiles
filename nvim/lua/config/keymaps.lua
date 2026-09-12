@@ -29,12 +29,16 @@ map("n", "n", "nzzzv", { desc = "Next search result" })
 map("n", "N", "Nzzzv", { desc = "Prev search result" })
 
 -- move lines in visual mode
-map("v", "J", ":m '>+1<cr>gv=gv", { desc = "Move selection down" })
-map("v", "K", ":m '<-2<cr>gv=gv", { desc = "Move selection up" })
+map("v", "J", ":m '>+1<cr>gv=gv", { desc = "Move selection down", silent = true })
+map("v", "K", ":m '<-2<cr>gv=gv", { desc = "Move selection up", silent = true })
 
 map("n", "-", "<cmd>Oil<cr>", { desc = "Open parent directory" })
 map("n", "<leader>e", "<cmd>Oil --float<cr>", { desc = "Oil floating explorer" })
 
-map("n", "[d", vim.diagnostic.goto_prev, { desc = "Prev diagnostic" })
-map("n", "]d", vim.diagnostic.goto_next, { desc = "Next diagnostic" })
+map("n", "[d", function()
+  vim.diagnostic.jump({ count = -1 })
+end, { desc = "Prev diagnostic" })
+map("n", "]d", function()
+  vim.diagnostic.jump({ count = 1 })
+end, { desc = "Next diagnostic" })
 map("n", "<leader>dd", vim.diagnostic.open_float, { desc = "Line diagnostics" })

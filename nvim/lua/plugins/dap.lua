@@ -7,10 +7,10 @@ return {
       "nvim-neotest/nvim-nio",
       {
         "jay-babu/mason-nvim-dap.nvim",
-        dependencies = { "mason-org/mason.nvim" },
+        dependencies = { { "mason-org/mason.nvim", opts = {} } },
         opts = {
           ensure_installed = { "js-debug-adapter" },
-          automatic_installation = { exclude = { "chrome" } },
+          automatic_installation = false,
         },
       },
     },

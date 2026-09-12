@@ -32,7 +32,12 @@ return {
         lua = { "stylua" },
       },
       default_format_opts = { lsp_format = "fallback" },
-      format_on_save = { timeout_ms = 500, lsp_format = "fallback" },
+      format_on_save = function(bufnr)
+        if vim.g.disable_autoformat or vim.b[bufnr].disable_autoformat then
+          return
+        end
+        return { timeout_ms = 500, lsp_format = "fallback" }
+      end,
     },
     init = function()
       vim.o.formatexpr = "v:lua.require'conform'.formatexpr()"
@@ -60,7 +65,9 @@ return {
         typescript = { "eslint_d" },
         typescriptreact = { "eslint_d" },
       }
+      local group = vim.api.nvim_create_augroup("NvimLint", { clear = true })
       vim.api.nvim_create_autocmd({ "BufWritePost", "BufReadPost", "InsertLeave" }, {
+        group = group,
         callback = function()
           lint.try_lint()
         end,

@@ -11,7 +11,6 @@ o.tabstop = 2
 o.shiftwidth = 2
 o.softtabstop = 2
 o.expandtab = true
-o.smartindent = true
 o.breakindent = true
 
 o.wrap = false
@@ -28,7 +27,7 @@ o.splitbelow = true
 
 o.updatetime = 200
 o.timeoutlen = 300
-o.ttimeoutlen = 10
+o.ttimeoutlen = 50
 
 o.undofile = true
 o.swapfile = false
@@ -37,7 +36,7 @@ o.writebackup = false
 
 o.mouse = "a"
 o.clipboard = "unnamedplus"
-o.completeopt = { "menuone", "noselect", "popup" }
+o.completeopt = { "menu", "menuone", "noselect", "popup" }
 o.pumheight = 10
 o.showmode = false
 o.cmdheight = 1

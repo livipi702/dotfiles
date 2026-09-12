@@ -13,10 +13,6 @@ return {
       quickfile = { enabled = true },
       scope = { enabled = true },
       words = { enabled = true },
-      terminal = { enabled = true },
-      gitbrowse = { enabled = true },
-      lazygit = { enabled = true },
-      zen = { enabled = true },
       explorer = { enabled = false },
     },
     keys = {
@@ -47,8 +43,7 @@ return {
       { "<C-/>", function() Snacks.terminal() end, desc = "Toggle terminal" },
       { "<C-_>", function() Snacks.terminal() end, desc = "which_key_ignore" },
       { "<leader>bd", function() Snacks.bufdelete() end, desc = "Delete buffer" },
-      -- zen: dim backdrop kept, single fullscreen window (no nested float)
-      { "<leader>Z", function() Snacks.zen({ win = { width = 0 } }) end, desc = "Toggle zen mode" },
+      { "<leader>Z", function() Snacks.zen.zoom() end, desc = "Toggle zen zoom" },
       { "<leader>tt", function() Snacks.terminal() end, desc = "Terminal" },
       { "<leader>cR", function() Snacks.rename.rename_file() end, desc = "Rename file" },
       { "]]", function() Snacks.words.jump(vim.v.count1) end, desc = "Next reference", mode = { "n", "t" } },

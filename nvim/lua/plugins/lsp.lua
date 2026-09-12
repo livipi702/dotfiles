@@ -1,10 +1,8 @@
 -- mason chain + native vim.lsp API (nvim-lspconfig is data-only now)
 return {
-  { "mason-org/mason.nvim", opts = {} },
-
   {
     "WhoIsSethDaniel/mason-tool-installer.nvim",
-    dependencies = { "mason-org/mason.nvim" },
+    dependencies = { { "mason-org/mason.nvim", opts = {} } },
     opts = {
       ensure_installed = {
         "prettierd",
@@ -34,17 +32,13 @@ return {
         "marksman",
         -- NOTE: swap vtsls -> tsgo/tsc later for the faster native TS server.
       },
-      automatic_enable = true,
     },
     config = function(_, opts)
-      require("mason-lspconfig").setup(opts)
-      -- blink capabilities for every server
       local ok, blink = pcall(require, "blink.cmp")
       if ok then
         vim.lsp.config("*", { capabilities = blink.get_lsp_capabilities() })
       end
+      require("mason-lspconfig").setup(opts)
     end,
   },
-
-  { "neovim/nvim-lspconfig" },
 }
