@@ -1,103 +1,77 @@
 # Dotfiles
 
-This repository contains my personal development environment configuration. It is structured to keep editor setup, shell configuration, and utility scripts organized and reusable across systems.
-
----
+Personal dev environment configuration. Managed with git; deployed via symlinks.
 
 ## Structure
 
 ```
 .
-├── nvim/            # Neovim configuration (lazy.nvim based)
-├── setup-scripts/   # Scripts for installing development tools
-├── 05-scripts/      # General-purpose utility scripts and templates
-├── .bashrc          # Shell configuration
+├── nvim/            # Daily-driver Neovim config (full-stack web, lazy.nvim)
+├── nvim-java/       # Isolated Java/DSA Neovim config (NVIM_APPNAME=nvim-java)
+├── setup-scripts/   # Shell utilities (concat, git identity, repo-to-AI, node_modules cleaner)
+├── .bashrc          # Stock Ubuntu skeleton (bash not the daily shell)
+├── .zshrc           # Daily shell: zinit, mise, starship/zoxide/atuin, aliases
 ├── .tmux.conf       # Tmux configuration
-├── .gitignore
+└── .gitignore
 ```
 
----
+## Prerequisites
 
-## Overview
-
-The goal of this repository is to provide a reproducible and portable setup for development. It includes:
-
-* Neovim configuration with modular plugin setup
-* Shell configuration with aliases, environment variables, and script integration
-* Tmux configuration for terminal workflow
-* Setup scripts for common tools such as Node, MongoDB, and Redis
-* Utility scripts for common development tasks
-* Gitignore templates for common stacks
-
----
+* `git`
+* `mise` providing `neovim` 0.12.x and `java` 21+ (required to run `eclipse.jdt.ls` in `nvim-java`)
 
 ## Setup
 
-Clone the repository:
-
 ```
-git clone https://github.com/livipi702/Dotfiles-.git
-cd Dotfiles-
-```
-
----
-
-## Linking Configuration
-
-The recommended approach is to symlink the configuration files:
-
-```
+git clone https://github.com/livipi702/dotfiles.git
+cd dotfiles
 ln -sf $(pwd)/.bashrc ~/.bashrc
+ln -sf $(pwd)/.zshrc ~/.zshrc
 ln -sf $(pwd)/.tmux.conf ~/.tmux.conf
 ln -sf $(pwd)/nvim ~/.config/nvim
+ln -sf $(pwd)/nvim-java ~/.config/nvim-java
+source ~/.zshrc
 ```
 
-Reload the shell:
+## nvim (daily driver)
 
-```
-source ~/.bashrc
-```
-
----
-
-## Neovim
-
-The Neovim configuration is based on lazy.nvim.
-
-* Plugins are organized under `lua/plugins/`
-* Configuration is modular and split by functionality
-* `lazy-lock.json` ensures consistent plugin versions
-
-Start Neovim:
+Full-stack web config. Minimalist `lazy.nvim` setup: `init.lua` loads
+`config/{options,lazy,keymaps,autocmds}`, one concern per file under `lua/plugins/`.
+`lazy-lock.json` pins plugin versions. `stylua.toml` (`Spaces/2`) governs Lua formatting.
 
 ```
 nvim
 ```
 
----
+## nvim-java (isolated Java/DSA)
 
-## Setup Scripts
+Separate build; shares nothing with `nvim/` (own `share/state/cache`, own `lazy-lock.json`).
+LSP via `nvim-jdtls` (`ftplugin/java.lua`, per-project `-data` workspace, debug + JUnit
+bundles installed through `mason`). Formatting is `jdtls` via `conform.nvim` fallback.
+Single-file DSA run: `<leader>r`. Tests: `<leader>df` (class), `<leader>dn` (nearest).
 
-Scripts in `setup-scripts/` are used to install and configure development tools. These are exposed through aliases defined in `.bashrc`.
+```
+NVIM_APPNAME=nvim-java nvim
+alias vij='NVIM_APPNAME=nvim-java nvim'
+```
 
-Examples include:
+First launch installs plugins (`lazy.nvim`) and tools (`mason`: `jdtls`,
+`java-debug-adapter`, `java-test`, `stylua`, `tree-sitter-cli`).
 
-* Node installation
-* MongoDB installation
-* Redis installation
-* Database setup
-* Prompt configuration
+## setup-scripts
 
----
+| Script            | Purpose                                                     |
+| ----------------- | ----------------------------------------------------------- |
+| `concat.sh`       | Directory merger (aliased as `concat`)                      |
+| `git.sh`          | `gitid` — switch between git identities per repo            |
+| `git2ai.py`       | Export a git repo as structured XML context for AI          |
+| `clean-modules.sh`| Safely find and remove `node_modules` directories           |
 
-## Utility Scripts
+## Shell
 
-The `05-scripts/` directory contains reusable scripts and templates, including:
-
-* Common aliases
-* Log management utilities
-* Git status helpers
-* Cleanup scripts
-* Gitignore templates for MERN and Spring Boot projects
-
----
+`.zshrc` is the daily shell: `zinit` plugins, `mise` activation, `EDITOR`/`VISUAL` set
+to `nvim`, `eza`/`bat`/`btop`/`lazygit` aliases, `vij` alias, `starship`/`zoxide`/`atuin`
+integrations, and `setup-scripts` aliases (`concat`, `git2ai`, `rm-modules`, `git.sh`
+sourcing). `MISE_GITHUB_TOKEN` is redacted here — export it in the local shell only.
+`.bashrc` is the stock Ubuntu skeleton. `.tmux.conf` uses a portable login shell
+(`$SHELL` with `sh` fallback) and pairs `vim-tmux-navigator` with both nvim configs.
