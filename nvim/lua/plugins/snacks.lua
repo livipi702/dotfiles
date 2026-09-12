@@ -1,4 +1,3 @@
--- picker + terminal pack. explorer OFF (oil owns files).
 return {
   {
     "folke/snacks.nvim",
@@ -13,7 +12,7 @@ return {
       quickfile = { enabled = true },
       scope = { enabled = true },
       words = { enabled = true },
-      explorer = { enabled = false },
+      explorer = { enabled = false }, -- oil owns files
     },
     keys = {
       -- hidden+ignored so .env shows; build junk stays excluded

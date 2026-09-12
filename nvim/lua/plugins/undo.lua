@@ -1,8 +1,10 @@
--- undotree: visual undo history (persistent via undofile in options)
 return {
   {
     "mbbill/undotree",
-    cmd = { "UndotreeToggle", "UndotreeShow" },
+    cmd = { "UndotreeToggle", "UndotreeShow", "UndotreeFocus" },
+    init = function()
+      vim.g.undotree_SetFocusWhenToggle = 1
+    end,
     keys = {
       { "<leader>u", "<cmd>UndotreeToggle<cr>", desc = "Undo tree" },
     },

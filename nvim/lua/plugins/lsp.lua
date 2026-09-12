@@ -7,7 +7,6 @@ return {
       ensure_installed = {
         "prettierd",
         "stylua",
-        "eslint_d",
         "tree-sitter-cli",
       },
     },

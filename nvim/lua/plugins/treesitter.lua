@@ -36,8 +36,8 @@ return {
           keymaps = {
             init_selection = "gnn",
             node_incremental = "gni",
-            scope_incremental = "grc",
-            node_decremental = "grm",
+            scope_incremental = "gnc",
+            node_decremental = "gnm",
           },
         },
       })

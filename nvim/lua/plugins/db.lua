@@ -1,4 +1,3 @@
--- Neon/Postgres browser
 return {
   {
     "tpope/vim-dadbod",

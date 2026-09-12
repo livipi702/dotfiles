@@ -1,4 +1,3 @@
--- base options (2-space indent matches prettier)
 local o = vim.opt
 
 o.number = true
@@ -51,7 +50,6 @@ vim.g.loaded_perl_provider = 0
 vim.g.loaded_python3_provider = 0
 vim.g.loaded_ruby_provider = 0
 
--- fold via treesitter
 o.foldmethod = "expr"
 o.foldexpr = "v:lua.vim.treesitter.foldexpr()"
 o.foldlevel = 99

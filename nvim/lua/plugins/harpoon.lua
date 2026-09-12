@@ -1,4 +1,3 @@
--- Harpoon2 file marks (<leader>H add, <leader>h menu, <leader>1-9 jump)
 return {
   {
     "ThePrimeagen/harpoon",
@@ -21,7 +20,7 @@ return {
           desc = "Harpoon file",
         },
         {
-          "<leader>h",
+          "<leader>hh",
           function()
             local harpoon = require("harpoon")
             harpoon.ui:toggle_quick_menu(harpoon:list())

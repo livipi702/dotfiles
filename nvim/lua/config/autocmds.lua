@@ -26,7 +26,6 @@ autocmd("FileType", {
   end,
 })
 
--- buffer-local LSP maps on attach (native 0.11+ API)
 augroup("LspAttachMaps", { clear = true })
 autocmd("LspAttach", {
   group = "LspAttachMaps",

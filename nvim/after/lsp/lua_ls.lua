@@ -1,5 +1,3 @@
--- lua_ls for editing our own config: LuaJIT runtime, vim global known,
--- full Neovim runtime library attached.
 return {
   settings = {
     Lua = {

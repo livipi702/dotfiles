@@ -1,4 +1,3 @@
--- Kanagawa Wave: warm dark blue-grey, built for long sessions
 return {
   {
     "rebelot/kanagawa.nvim",

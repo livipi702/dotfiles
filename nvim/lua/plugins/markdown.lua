@@ -1,4 +1,3 @@
--- render-markdown: in-buffer markdown viewing (needs markdown parsers)
 return {
   {
     "MeanderingProgrammer/render-markdown.nvim",
