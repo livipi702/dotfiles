@@ -43,7 +43,6 @@ return {
       { "<C-_>", function() Snacks.terminal() end, desc = "which_key_ignore" },
       { "<leader>bd", function() Snacks.bufdelete() end, desc = "Delete buffer" },
       { "<leader>Z", function() Snacks.zen.zoom() end, desc = "Toggle zen zoom" },
-      { "<leader>tt", function() Snacks.terminal() end, desc = "Terminal" },
       { "<leader>cR", function() Snacks.rename.rename_file() end, desc = "Rename file" },
       { "]]", function() Snacks.words.jump(vim.v.count1) end, desc = "Next reference", mode = { "n", "t" } },
       { "[[", function() Snacks.words.jump(-vim.v.count1) end, desc = "Prev reference", mode = { "n", "t" } },

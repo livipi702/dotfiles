@@ -10,7 +10,7 @@ return {
       completion = { documentation = { auto_show = false } },
       sources = {
         default = { "lsp", "path", "snippets", "buffer" },
-        per_filetype = { sql = { "dadbod" } },
+        per_filetype = { sql = { inherit_defaults = true, "dadbod" } },
         providers = { dadbod = { module = "vim_dadbod_completion.blink" } },
       },
       fuzzy = { implementation = "prefer_rust_with_warning" },

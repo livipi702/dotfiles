@@ -3,12 +3,11 @@ return {
     "ThePrimeagen/harpoon",
     branch = "harpoon2",
     dependencies = { "nvim-lua/plenary.nvim" },
-    opts = {
-      menu = { width = vim.api.nvim_win_get_width(0) - 4 },
-      settings = { save_on_toggle = true },
-    },
-    config = function(_, opts)
-      require("harpoon"):setup(opts)
+    config = function()
+      require("harpoon"):setup({
+        menu = { width = vim.api.nvim_win_get_width(0) - 4 },
+        settings = { save_on_toggle = true },
+      })
     end,
     keys = function()
       local keys = {
