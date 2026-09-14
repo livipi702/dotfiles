@@ -14,7 +14,13 @@ return {
       view_options = {
         show_hidden = true,
         is_always_hidden = function(name)
-          return name == ".git" or name == "node_modules" or name == "dist"
+          return name == ".git"
+            or name == "node_modules"
+            or name == "dist"
+            or name == "coverage"
+            or name == ".turbo"
+            or name == ".vite"
+            or name == ".next"
         end,
       },
     },

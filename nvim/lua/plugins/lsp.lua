@@ -29,7 +29,7 @@ return {
         "yamlls",
         "lua_ls",
         "marksman",
-        -- NOTE: swap vtsls -> tsgo/tsc later for the faster native TS server.
+        -- NOTE: swap vtsls -> tsc later for the faster native TS server (TS 7+, tsc --lsp --stdio).
       },
     },
     config = function(_, opts)
