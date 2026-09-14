@@ -11,6 +11,9 @@ return {
       lsp_file_methods = { enabled = true, timeout_ms = 1000 },
       constrain_cursor = "editable",
       float = { win_options = { winblend = 20 } },
+      keymaps = {
+        ["q"] = "actions.close",
+      },
       view_options = {
         show_hidden = true,
         is_always_hidden = function(name)
