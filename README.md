@@ -1,6 +1,6 @@
 # Dotfiles
 
-Personal dev environment configuration. Managed with git; deployed via symlinks.
+Personal dev environment configuration. Managed with git; deployed via plain copies.
 
 ## Structure
 
@@ -25,12 +25,20 @@ Personal dev environment configuration. Managed with git; deployed via symlinks.
 ```
 git clone https://github.com/livipi702/dotfiles.git
 cd dotfiles
-ln -sf $(pwd)/.bashrc ~/.bashrc
-ln -sf $(pwd)/.zshrc ~/.zshrc
-ln -sf $(pwd)/.tmux.conf ~/.tmux.conf
-ln -sf $(pwd)/nvim ~/.config/nvim
-ln -sf $(pwd)/nvim-java ~/.config/nvim-java
+cp .bashrc ~/.bashrc
+cp .zshrc ~/.zshrc
+cp .tmux.conf ~/.tmux.conf
+cp -r nvim ~/.config/nvim
+cp -r nvim-java ~/.config/nvim-java
 source ~/.zshrc
+```
+
+Live files are plain copies, not symlinks. Edit in place, then sync back
+before committing:
+
+```
+cp -r ~/.config/nvim nvim
+cp -r ~/.config/nvim-java nvim-java
 ```
 
 ## nvim (daily driver)
