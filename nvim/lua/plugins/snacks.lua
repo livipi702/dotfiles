@@ -31,7 +31,6 @@ return {
       { "<leader>sh", function() Snacks.picker.help() end, desc = "Help pages" },
       { "<leader>sk", function() Snacks.picker.keymaps() end, desc = "Keymaps" },
       { "<leader>sR", function() Snacks.picker.resume() end, desc = "Resume picker" },
-      { "<leader>su", function() Snacks.picker.undo() end, desc = "Undo history" },
       { "<leader>gb", function() Snacks.picker.git_branches() end, desc = "Git branches" },
       { "<leader>gl", function() Snacks.picker.git_log() end, desc = "Git log" },
       { "<leader>gs", function() Snacks.picker.git_status() end, desc = "Git status" },

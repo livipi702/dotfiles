@@ -13,15 +13,13 @@ if not root_dir then
 end
 
 -- Dedicated -data workspace per project (avoids reindex + corruption).
-local project_name = vim.fn.fnamemodify(root_dir, ":p:h:t")
+local project_name = vim.fs.basename(root_dir)
 local workspace_dir = vim.fn.stdpath("data") .. "/jdtls-workspace/" .. project_name
 
 -- Bundles for debugging + JUnit (installed via mason, isolated to nvim-java data dir).
 local mason_share = vim.fn.stdpath("data") .. "/mason/packages"
-local bundles = {
-  vim.fn.glob(mason_share .. "/java-debug-adapter/extension/server/com.microsoft.java.debug.plugin-*.jar", true),
-}
-local java_test_bundles = vim.split(vim.fn.glob(mason_share .. "/java-test/extension/server/*.jar", true), "\n")
+local bundles = vim.fn.glob(mason_share .. "/java-debug-adapter/extension/server/com.microsoft.java.debug.plugin-*.jar", false, true)
+local java_test_bundles = vim.fn.glob(mason_share .. "/java-test/extension/server/*.jar", false, true)
 local excluded = {
   "com.microsoft.java.test.runner-jar-with-dependencies.jar",
   "jacocoagent.jar",

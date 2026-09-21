@@ -27,7 +27,7 @@ return {
           desc = "Harpoon quick menu",
         },
       }
-      for i = 1, 9 do
+      for i = 1, 4 do
         table.insert(keys, {
           "<leader>" .. i,
           function()
