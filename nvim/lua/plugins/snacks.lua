@@ -16,11 +16,11 @@ return {
     },
     keys = {
       -- hidden+ignored so .env shows; build junk stays excluded
-      { "<leader><space>", function() Snacks.picker.smart({ hidden = true, ignored = true, exclude = { "node_modules", "dist", "coverage", ".turbo", ".vite", "*.tsbuildinfo", "*.log" } }) end, desc = "Smart find files" },
+      { "<leader><space>", function() Snacks.picker.smart({ hidden = true, ignored = true, exclude = { "node_modules", "dist", "coverage", ".turbo", ".vite", ".next", "*.tsbuildinfo", "*.log" } }) end, desc = "Smart find files" },
       { "<leader>,", function() Snacks.picker.buffers() end, desc = "Buffers" },
       { "<leader>/", function() Snacks.picker.grep() end, desc = "Grep" },
       { "<leader>:", function() Snacks.picker.command_history() end, desc = "Command history" },
-      { "<leader>ff", function() Snacks.picker.files({ hidden = true, ignored = true, exclude = { "node_modules", "dist", "coverage", ".turbo", ".vite", "*.tsbuildinfo", "*.log" } }) end, desc = "Find files" },
+      { "<leader>ff", function() Snacks.picker.files({ hidden = true, ignored = true, exclude = { "node_modules", "dist", "coverage", ".turbo", ".vite", ".next", "*.tsbuildinfo", "*.log" } }) end, desc = "Find files" },
       { "<leader>fg", function() Snacks.picker.git_files() end, desc = "Find git files" },
       { "<leader>fr", function() Snacks.picker.recent() end, desc = "Recent" },
       { "<leader>fc", function() Snacks.picker.files({ cwd = vim.fn.stdpath("config") }) end, desc = "Find config file" },
