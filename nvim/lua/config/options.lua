@@ -44,12 +44,6 @@ o.confirm = true
 
 o.winborder = "rounded"
 
--- unused providers off (faster startup; re-enable if a plugin needs one)
-vim.g.loaded_node_provider = 0
-vim.g.loaded_perl_provider = 0
-vim.g.loaded_python3_provider = 0
-vim.g.loaded_ruby_provider = 0
-
 o.foldmethod = "expr"
 o.foldexpr = "v:lua.vim.treesitter.foldexpr()"
 o.foldlevel = 99
