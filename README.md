@@ -18,6 +18,7 @@ Personal dev environment configuration. Managed with git; deployed via plain cop
 ## Prerequisites
 
 * `git`
+* `rsync` (used by the copy-based sync below)
 * `mise` providing `neovim` 0.12.x and `java` 21+ (required to run `eclipse.jdt.ls` in `nvim-java`)
 
 ## Setup
@@ -28,18 +29,22 @@ cd dotfiles
 cp .bashrc ~/.bashrc
 cp .zshrc ~/.zshrc
 cp .tmux.conf ~/.tmux.conf
-cp -r nvim ~/.config/nvim
-cp -r nvim-java ~/.config/nvim-java
+rsync -a --delete nvim/ ~/.config/nvim/
+rsync -a --delete nvim-java/ ~/.config/nvim-java/
 source ~/.zshrc
 ```
 
 Live files are plain copies, not symlinks. Edit in place, then sync back
-before committing:
+before committing. The trailing slash on the source is required, and
+`--delete` mirrors removals:
 
 ```
-cp -r ~/.config/nvim nvim
-cp -r ~/.config/nvim-java nvim-java
+rsync -a --delete ~/.config/nvim/ nvim/
+rsync -a --delete ~/.config/nvim-java/ nvim-java/
 ```
+
+Do not use `cp -r ~/.config/nvim nvim` here. `nvim/` already exists, so
+`cp -r` copies *into* it and leaves a stray `nvim/nvim/`.
 
 ## nvim (daily driver)
 
