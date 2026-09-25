@@ -38,13 +38,14 @@ return {
       end
       -- pwa-node attach/launch covers Vite (dev) + Hono (tsx/node)
       for _, adapter in ipairs({ "pwa-node", "pwa-chrome" }) do
-        dap.adapters[adapter] = dap.adapters[adapter]
-          or {
+        if not dap.adapters[adapter] then
+          dap.adapters[adapter] = {
             type = "server",
             host = "localhost",
             port = "${port}",
             executable = { command = "js-debug-adapter", args = { "${port}" } },
           }
+        end
       end
       for _, lang in ipairs({ "typescript", "javascript", "typescriptreact", "javascriptreact" }) do
         dap.configurations[lang] = {

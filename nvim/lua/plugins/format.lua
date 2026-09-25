@@ -29,6 +29,10 @@ return {
         yaml = { "prettierd", "prettier", stop_after_first = true },
         markdown = { "prettierd", "prettier", stop_after_first = true },
         lua = { "stylua" },
+        sql = { "sqlfmt" },
+        sh = { "shfmt" },
+        bash = { "shfmt" },
+        toml = { "taplo" },
       },
       default_format_opts = { lsp_format = "fallback" },
       format_on_save = function(bufnr)

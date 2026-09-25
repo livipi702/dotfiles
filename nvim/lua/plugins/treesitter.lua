@@ -35,9 +35,9 @@ return {
           enable = true,
           keymaps = {
             init_selection = "gnn",
-            node_incremental = "gni",
-            scope_incremental = "gnc",
-            node_decremental = "gnm",
+            node_incremental = false,
+            scope_incremental = false,
+            node_decremental = false,
           },
         },
       })

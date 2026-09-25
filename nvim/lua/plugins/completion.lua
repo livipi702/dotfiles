@@ -13,7 +13,6 @@ return {
         per_filetype = { sql = { inherit_defaults = true, "dadbod" } },
         providers = { dadbod = { module = "vim_dadbod_completion.blink" } },
       },
-      fuzzy = { implementation = "prefer_rust_with_warning" },
     },
     opts_extend = { "sources.default" },
   },

@@ -1,3 +1,5 @@
+local exclude = { "node_modules", "dist", "coverage", ".turbo", ".vite", ".next", "*.tsbuildinfo", "*.log" }
+
 return {
   {
     "folke/snacks.nvim",
@@ -16,11 +18,11 @@ return {
     },
     keys = {
       -- hidden+ignored so .env shows; build junk stays excluded
-      { "<leader><space>", function() Snacks.picker.smart({ hidden = true, ignored = true, exclude = { "node_modules", "dist", "coverage", ".turbo", ".vite", ".next", "*.tsbuildinfo", "*.log" } }) end, desc = "Smart find files" },
+      { "<leader><space>", function() Snacks.picker.smart({ hidden = true, ignored = true, exclude = exclude }) end, desc = "Smart find files" },
       { "<leader>,", function() Snacks.picker.buffers() end, desc = "Buffers" },
       { "<leader>/", function() Snacks.picker.grep() end, desc = "Grep" },
       { "<leader>:", function() Snacks.picker.command_history() end, desc = "Command history" },
-      { "<leader>ff", function() Snacks.picker.files({ hidden = true, ignored = true, exclude = { "node_modules", "dist", "coverage", ".turbo", ".vite", ".next", "*.tsbuildinfo", "*.log" } }) end, desc = "Find files" },
+      { "<leader>ff", function() Snacks.picker.files({ hidden = true, ignored = true, exclude = exclude }) end, desc = "Find files" },
       { "<leader>fg", function() Snacks.picker.git_files() end, desc = "Find git files" },
       { "<leader>fr", function() Snacks.picker.recent() end, desc = "Recent" },
       { "<leader>fc", function() Snacks.picker.files({ cwd = vim.fn.stdpath("config") }) end, desc = "Find config file" },
@@ -38,12 +40,11 @@ return {
       { "<leader>gB", function() Snacks.gitbrowse() end, desc = "Git browse", mode = { "n", "v" } },
       { "<leader>gg", function() Snacks.lazygit() end, desc = "Lazygit" },
       { "<C-/>", function() Snacks.terminal() end, desc = "Toggle terminal" },
-      { "<C-_>", function() Snacks.terminal() end, desc = "which_key_ignore" },
       { "<leader>bd", function() Snacks.bufdelete() end, desc = "Delete buffer" },
       { "<leader>Z", function() Snacks.zen.zoom() end, desc = "Toggle zen zoom" },
       { "<leader>cR", function() Snacks.rename.rename_file() end, desc = "Rename file" },
-      { "]]", function() Snacks.words.jump(vim.v.count1) end, desc = "Next reference", mode = { "n", "t" } },
-      { "[[", function() Snacks.words.jump(-vim.v.count1) end, desc = "Prev reference", mode = { "n", "t" } },
+      { "]]", function() Snacks.words.jump(vim.v.count1) end, desc = "Next reference" },
+      { "[[", function() Snacks.words.jump(-vim.v.count1) end, desc = "Prev reference" },
     },
   },
 }
