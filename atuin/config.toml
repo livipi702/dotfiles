@@ -1,0 +1,49 @@
+# Atuin 18.23.0 — non-default values only.
+# Reference: https://docs.atuin.sh/18.23/configuration/config/
+# Verify after any edit: atuin config print (removed keys revert silently)
+
+# Only affects what is stored, not what executes.
+history_filter = [
+    "^export .*=",
+]
+
+# Enables the "workspace" filter-mode inside git repos. Default: false.
+workspaces = true
+
+# Default: 40 (0 = full screen).
+inline_height = 20
+
+# Default: true. 14% of this history was non-zero exits, and most were shell
+# lifecycle noise (exit, exec zsh -l, source ~/.zshrc) rather than real failures.
+store_failed = false
+
+[ui]
+# Default: ["duration", "time", "command"]. Only "command" expands; keep it last.
+columns = ["time", "duration", "command"]
+
+[preview]
+# Default: "auto" sizes the preview to the selected command, so the list jumps
+# around as you arrow through. "static" sizes to the longest result instead.
+strategy = "static"
+
+[tmux]
+# Opens search in a floating tmux popup instead of drawing over the pane.
+# Needs tmux >= 3.2 and zsh/bash/fish. Read by `atuin init` at shell startup,
+# so restart your shell (or re-source ~/.zshrc) for this to take effect.
+enabled = true
+
+# Undocumented in the 18.23 docs but valid in 18.23.0 — re-add by hand if this
+# file is ever regenerated. Matched on command name, so "ls" hides "ls -la".
+[stats]
+ignored_commands = [
+    "cd",
+    "ls",
+    "vi",
+    "vim",
+    "nvim",
+    "cat",
+    "pwd",
+    "exit",
+    "clear",
+    "history"
+]

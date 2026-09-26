@@ -8,6 +8,7 @@ Personal dev environment configuration. Managed with git; deployed via plain cop
 .
 ├── nvim/            # Daily-driver Neovim config (full-stack web, lazy.nvim)
 ├── nvim-java/       # Isolated Java/DSA Neovim config (NVIM_APPNAME=nvim-java)
+├── atuin/           # Atuin history config (non-default values only, documented inline)
 ├── setup-scripts/   # Shell utilities (concat, git identity, repo-to-AI, node_modules cleaner)
 ├── .bashrc          # Stock Ubuntu skeleton (bash not the daily shell)
 ├── .zshrc           # Daily shell: zinit, mise, starship/zoxide/atuin, aliases
@@ -31,6 +32,7 @@ cp .zshrc ~/.zshrc
 cp .tmux.conf ~/.tmux.conf
 rsync -a --delete nvim/ ~/.config/nvim/
 rsync -a --delete nvim-java/ ~/.config/nvim-java/
+rsync -a atuin/ ~/.config/atuin/
 source ~/.zshrc
 ```
 
@@ -41,7 +43,11 @@ before committing. The trailing slash on the source is required, and
 ```
 rsync -a --delete ~/.config/nvim/ nvim/
 rsync -a --delete ~/.config/nvim-java/ nvim-java/
+rsync -a ~/.config/atuin/ atuin/
 ```
+
+`atuin/` is synced without `--delete`: `config.toml` is the only file, and a future
+atuin release may add its own alongside it.
 
 Do not use `cp -r ~/.config/nvim nvim` here. `nvim/` already exists, so
 `cp -r` copies *into* it and leaves a stray `nvim/nvim/`.
