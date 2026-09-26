@@ -1,34 +1,34 @@
 local augroup = vim.api.nvim_create_augroup
 local autocmd = vim.api.nvim_create_autocmd
 
-augroup("YankHighlight", { clear = true })
+local yank_grp = augroup("YankHighlight", { clear = true })
 autocmd("TextYankPost", {
-  group = "YankHighlight",
+  group = yank_grp,
   callback = function()
     vim.hl.on_yank({ higroup = "IncSearch", timeout = 150 })
   end,
 })
 
-augroup("ResizeSplits", { clear = true })
+local resize_grp = augroup("ResizeSplits", { clear = true })
 autocmd("VimResized", {
-  group = "ResizeSplits",
+  group = resize_grp,
   callback = function()
     vim.cmd("tabdo wincmd =")
   end,
 })
 
-augroup("CloseWithQ", { clear = true })
+local close_grp = augroup("CloseWithQ", { clear = true })
 autocmd("FileType", {
-  group = "CloseWithQ",
+  group = close_grp,
   pattern = { "help", "man", "qf", "lspinfo", "checkhealth" },
   callback = function(ev)
-    vim.keymap.set("n", "q", "<cmd>close<cr>", { buf = ev.buf, silent = true })
+    vim.keymap.set("n", "q", "<cmd>close<CR>", { buf = ev.buf, silent = true })
   end,
 })
 
-augroup("LspAttachMaps", { clear = true })
+local lsp_grp = augroup("LspAttachMaps", { clear = true })
 autocmd("LspAttach", {
-  group = "LspAttachMaps",
+  group = lsp_grp,
   callback = function(ev)
     local map = function(keys, fn, desc)
       vim.keymap.set("n", keys, fn, { buf = ev.buf, desc = "LSP: " .. desc })

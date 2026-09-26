@@ -50,7 +50,7 @@ vim.g.loaded_perl_provider = 0
 vim.g.loaded_python3_provider = 0
 vim.g.loaded_ruby_provider = 0
 
-o.foldmethod = "expr"
-o.foldexpr = "v:lua.vim.treesitter.foldexpr()"
+-- folds: window-local method/expr owned by treesitter-modules (fold.enable)
+-- keep only global defaults here so oil/help/qf without parser don't get a broken expr
 o.foldlevel = 99
 o.foldlevelstart = 99

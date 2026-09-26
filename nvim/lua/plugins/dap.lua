@@ -8,7 +8,7 @@ return {
         "jay-babu/mason-nvim-dap.nvim",
         dependencies = { { "mason-org/mason.nvim", opts = {} } },
         opts = {
-          ensure_installed = { "js-debug-adapter" },
+          ensure_installed = { "js" },
           automatic_installation = false,
         },
       },

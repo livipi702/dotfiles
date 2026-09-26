@@ -8,9 +8,16 @@ return {
         -- <leader>cf avoids clashing with the <leader>f* picker family
         "<leader>cf",
         function()
-          require("conform").format({ async = true })
+          local mode = vim.api.nvim_get_mode().mode
+          local range = nil
+          if mode == "v" or mode == "V" or mode == "\22" then
+            local s = vim.api.nvim_buf_get_mark(0, "<")
+            local e = vim.api.nvim_buf_get_mark(0, ">")
+            range = { start = { s[1], s[2] }, ["end"] = { e[1], e[2] } }
+          end
+          require("conform").format({ async = true, lsp_format = "fallback", range = range })
         end,
-        mode = "",
+        mode = { "n", "x" },
         desc = "Format buffer",
       },
     },

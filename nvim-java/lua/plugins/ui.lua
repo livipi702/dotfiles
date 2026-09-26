@@ -31,7 +31,6 @@ return {
     },
   },
   {
-    -- seamless C-h/j/k/l with tmux panes (christoomey plugin both sides)
     "christoomey/vim-tmux-navigator",
     lazy = false,
   },

@@ -31,15 +31,7 @@ return {
         highlight = { enable = true },
         indent = { enable = true },
         fold = { enable = true },
-        incremental_selection = {
-          enable = true,
-          keymaps = {
-            init_selection = "gnn",
-            node_incremental = false,
-            scope_incremental = false,
-            node_decremental = false,
-          },
-        },
+        incremental_selection = { enable = false },
       })
     end,
   },

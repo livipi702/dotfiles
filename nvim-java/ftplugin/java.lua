@@ -51,6 +51,11 @@ end
 
 jdtls.start_or_attach(config)
 
+-- DAP adapter for :DapNew auto-discovery (needs bundles above + nvim-dap).
+pcall(function()
+  require("jdtls").setup_dap()
+end)
+
 -- Buffer-local Java extras (official nvim-jdtls API).
 local map = function(mode, keys, fn, desc)
   vim.keymap.set(mode, keys, fn, { buffer = true, desc = "Java: " .. desc })

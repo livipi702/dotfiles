@@ -33,7 +33,7 @@ return {
     dependencies = { "nvim-lua/plenary.nvim" },
     opts = {},
     keys = {
-      { "<leader>st", "<cmd>TodoQuickFix<cr>", desc = "TODOs" },
+      { "<leader>st", "<cmd>TodoQuickFix<CR>", desc = "TODOs" },
     },
   },
 }

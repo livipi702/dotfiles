@@ -23,6 +23,7 @@ return {
       "saghen/blink.cmp",
     },
     opts = {
+      automatic_enable = true,
       ensure_installed = {
         "vtsls",
         "tailwindcss",
