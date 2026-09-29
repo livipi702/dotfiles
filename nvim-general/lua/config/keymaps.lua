@@ -33,3 +33,4 @@ map("n", "<leader>e", "<cmd>Oil --float<CR>", { desc = "Oil floating explorer" }
 
 map("n", "g[[", "[[", { desc = "Prev section" })
 map("n", "g]]", "]]", { desc = "Next section" })
+map("n", "<leader>u", "<cmd>Undotree<CR>", { desc = "Undo tree" })

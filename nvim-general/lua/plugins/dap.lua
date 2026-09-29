@@ -4,6 +4,21 @@ return {
     dependencies = {
       "rcarriga/nvim-dap-ui",
       "nvim-neotest/nvim-nio",
+      {
+        "jay-babu/mason-nvim-dap.nvim",
+        dependencies = { { "mason-org/mason.nvim", opts = {} } },
+        opts = {
+          ensure_installed = { "python" },
+          automatic_installation = false,
+        },
+      },
+      {
+        "mfussenegger/nvim-dap-python",
+        ft = { "python" },
+        config = function()
+          require("dap-python").setup(vim.fn.stdpath("data") .. "/mason/packages/debugpy/venv/bin/python")
+        end,
+      },
     },
     keys = {
       { "<leader>db", function() require("dap").toggle_breakpoint() end, desc = "Toggle breakpoint" },
@@ -28,8 +43,6 @@ return {
           dapui.close()
         end
       end
-      -- java adapter is registered by nvim-jdtls when bundles are configured.
-      -- :DapNew auto-discovers main classes; project .vscode/launch.json also works.
     end,
   },
 }

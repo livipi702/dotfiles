@@ -89,7 +89,7 @@ alias lg='lazygit'
 
 alias now='date "+%A, %d %B %Y - %I:%M:%S %p %Z"'
 
-alias vij='NVIM_APPNAME=nvim-java nvim'
+alias vig='NVIM_APPNAME=nvim-general nvim'
 
 # ── fzf key bindings (before atuin so atuin keeps Ctrl-R) ───────────
 if [ -s "$HOME/.fzf.zsh" ]; then

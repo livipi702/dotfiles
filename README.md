@@ -7,7 +7,7 @@ Personal dev environment configuration. Managed with git; deployed via plain cop
 ```
 .
 ├── nvim/            # Daily-driver Neovim config (full-stack web, lazy.nvim)
-├── nvim-java/       # Isolated Java/DSA Neovim config (NVIM_APPNAME=nvim-java)
+├── nvim-general/   # Isolated Python/general Neovim config (NVIM_APPNAME=nvim-general)
 ├── atuin/           # Atuin history config (non-default values only, documented inline)
 ├── setup-scripts/   # Shell utilities (concat, git identity, repo-to-AI, node_modules cleaner)
 ├── .bashrc          # Stock Ubuntu skeleton (bash not the daily shell)
@@ -20,7 +20,7 @@ Personal dev environment configuration. Managed with git; deployed via plain cop
 
 * `git`
 * `rsync` (used by the copy-based sync below)
-* `mise` providing `neovim` 0.12.x and `java` 21+ (required to run `eclipse.jdt.ls` in `nvim-java`)
+* `mise` providing `neovim` 0.12.x and `python` 3.13 (LSP `basedpyright`/`ruff` and `debugpy` install through `mason` in `nvim-general`)
 
 ## Setup
 
@@ -31,7 +31,7 @@ cp .bashrc ~/.bashrc
 cp .zshrc ~/.zshrc
 cp .tmux.conf ~/.tmux.conf
 rsync -a --delete nvim/ ~/.config/nvim/
-rsync -a --delete nvim-java/ ~/.config/nvim-java/
+rsync -a --delete nvim-general/ ~/.config/nvim-general/
 rsync -a atuin/ ~/.config/atuin/
 source ~/.zshrc
 ```
@@ -42,7 +42,7 @@ before committing. The trailing slash on the source is required, and
 
 ```
 rsync -a --delete ~/.config/nvim/ nvim/
-rsync -a --delete ~/.config/nvim-java/ nvim-java/
+rsync -a --delete ~/.config/nvim-general/ nvim-general/
 rsync -a ~/.config/atuin/ atuin/
 ```
 
@@ -62,20 +62,20 @@ Full-stack web config. Minimalist `lazy.nvim` setup: `init.lua` loads
 nvim
 ```
 
-## nvim-java (isolated Java/DSA)
+## nvim-general (isolated Python/general)
 
 Separate build; shares nothing with `nvim/` (own `share/state/cache`, own `lazy-lock.json`).
-LSP via `nvim-jdtls` (`ftplugin/java.lua`, per-project `-data` workspace, debug + JUnit
-bundles installed through `mason`). Formatting is `jdtls` via `conform.nvim` fallback.
-Single-file DSA run: `<leader>r`. Tests: `<leader>df` (class), `<leader>dn` (nearest).
+LSP via `basedpyright` + `ruff` (installed through `mason`, auto-enabled). Formatting is
+`ruff_format` via `conform.nvim`. Debug via `debugpy` (`nvim-dap-python`). Tests via
+`neotest-python` (`<leader>tf` file, `<leader>tn` nearest, `<leader>td` debug nearest).
 
 ```
-NVIM_APPNAME=nvim-java nvim
-alias vij='NVIM_APPNAME=nvim-java nvim'
+NVIM_APPNAME=nvim-general nvim
+alias vig='NVIM_APPNAME=nvim-general nvim'
 ```
 
-First launch installs plugins (`lazy.nvim`) and tools (`mason`: `jdtls`,
-`java-debug-adapter`, `java-test`, `stylua`, `tree-sitter-cli`).
+First launch installs plugins (`lazy.nvim`) and tools (`mason`: `basedpyright`,
+`ruff`, `debugpy`, `stylua`, `tree-sitter-cli`).
 
 ## setup-scripts
 
@@ -89,7 +89,7 @@ First launch installs plugins (`lazy.nvim`) and tools (`mason`: `jdtls`,
 ## Shell
 
 `.zshrc` is the daily shell: `zinit` plugins, `mise` activation, `EDITOR`/`VISUAL` set
-to `nvim`, `eza`/`bat`/`btop`/`lazygit` aliases, `vij` alias, `starship`/`zoxide`/`atuin`
+to `nvim`, `eza`/`bat`/`btop`/`lazygit` aliases, `vig` alias, `starship`/`zoxide`/`atuin`
 integrations, and `setup-scripts` aliases (`concat`, `git2ai`, `rm-modules`, `git.sh`
 sourcing). `MISE_GITHUB_TOKEN` is redacted here — export it in the local shell only.
 `.bashrc` is the stock Ubuntu skeleton. `.tmux.conf` uses a portable login shell

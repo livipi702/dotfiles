@@ -24,10 +24,8 @@ return {
     ---@module "conform"
     ---@type conform.setupOpts
     opts = {
-      -- java intentionally empty: jdtls LSP formatting via lsp_format fallback.
-      -- Switch to { "google-java-format" } + mason install only if Google style is wanted later.
       formatters_by_ft = {
-        java = {},
+        python = { "ruff_format" },
         lua = { "stylua" },
       },
       default_format_opts = { lsp_format = "fallback" },

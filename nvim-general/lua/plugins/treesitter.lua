@@ -8,10 +8,10 @@ return {
     config = function()
       require("treesitter-modules").setup({
         ensure_installed = {
-          "java",
-          "javadoc",
-          "xml",
-          "properties",
+          "python",
+          "toml",
+          "yaml",
+          "json",
           "lua",
           "luadoc",
           "vim",

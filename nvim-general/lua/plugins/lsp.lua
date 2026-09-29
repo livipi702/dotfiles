@@ -1,16 +1,12 @@
 -- mason chain + native vim.lsp API (nvim-lspconfig is data-only now)
--- NOTE: jdtls is installed via mason-tool-installer but NOT enabled via
--- mason-lspconfig / vim.lsp.enable. It is started per-buffer by nvim-jdtls
--- in ftplugin/java.lua (official ftplugin approach).
 return {
   {
     "WhoIsSethDaniel/mason-tool-installer.nvim",
     dependencies = { { "mason-org/mason.nvim", opts = {} } },
     opts = {
       ensure_installed = {
-        "jdtls",
-        "java-debug-adapter",
-        "java-test",
+        "basedpyright",
+        "ruff",
         "stylua",
         "tree-sitter-cli",
       },
@@ -25,13 +21,13 @@ return {
       "saghen/blink.cmp",
     },
     opts = {
+      automatic_enable = true,
       ensure_installed = {
+        "basedpyright",
+        "ruff",
         "lua_ls",
         "marksman",
       },
-      -- jdtls is mason-installed but must NOT auto-enable:
-      -- nvim-jdtls starts it per-buffer in ftplugin/java.lua.
-      automatic_enable = { exclude = { "jdtls" } },
     },
     config = function(_, opts)
       local ok, blink = pcall(require, "blink.cmp")
