@@ -30,6 +30,7 @@ local lsp_grp = augroup("LspAttachMaps", { clear = true })
 autocmd("LspAttach", {
   group = lsp_grp,
   callback = function(ev)
+    vim.bo[ev.buf].formatexpr = nil
     local map = function(keys, fn, desc)
       vim.keymap.set("n", keys, fn, { buf = ev.buf, desc = "LSP: " .. desc })
     end
@@ -37,7 +38,6 @@ autocmd("LspAttach", {
     -- references/rename/code-action use native grr/grn/gra (0.11+ defaults)
     map("gI", vim.lsp.buf.implementation, "Goto implementation")
     map("gy", vim.lsp.buf.type_definition, "Type definition")
-    map("K", vim.lsp.buf.hover, "Hover")
     map("<leader>ca", vim.lsp.buf.code_action, "Code action")
     map("<leader>cr", vim.lsp.buf.rename, "Rename")
     map("<leader>cd", vim.diagnostic.open_float, "Diagnostics")

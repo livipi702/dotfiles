@@ -12,9 +12,13 @@ o.softtabstop = 2
 o.expandtab = true
 o.breakindent = true
 
-o.wrap = false
+o.wrap = true
 o.scrolloff = 8
 o.sidescrolloff = 8
+o.startofline = true
+o.linebreak = true
+o.showbreak = "↪ "
+o.smoothscroll = true
 
 o.ignorecase = true
 o.smartcase = true
@@ -43,6 +47,10 @@ o.laststatus = 3
 o.confirm = true
 
 o.winborder = "rounded"
+o.pumborder = "rounded"
+o.title = true
+o.shortmess:append("IcC")
+o.formatoptions:remove({ "t", "c", "o" })
 
 -- folds: window-local method/expr owned by treesitter-modules (fold.enable)
 -- keep only global defaults here so oil/help/qf without parser don't get a broken expr
